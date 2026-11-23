@@ -1,0 +1,45 @@
+/* ---------- notes: editing ---------- */
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.rhead .btn{min-height:38px;padding:6px 14px;flex:none}
+.editor{gap:12px}
+input.ed-title{font-family:var(--f-display);font-size:24px;line-height:1.15}
+.edbar{position:sticky;top:0;z-index:2;background:var(--bg);padding:8px 0;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--rule)}
+.edtools{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.edtools::-webkit-scrollbar{display:none}
+.edtools button{flex:none;min-width:42px;height:40px;border:1px solid var(--rule);background:var(--panel);border-radius:7px;font-size:15px;font-weight:700;padding:0 11px;white-space:nowrap}
+.edtools button.link{border-color:var(--key);color:var(--key)}
+.edtools button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.edtools button:disabled{opacity:.4}
+.edtools .sp{flex:1}
+.sugg{display:flex;flex-direction:column;border:1px solid var(--key);border-radius:8px;background:var(--panel);max-height:236px;overflow-y:auto}
+.sugg button{all:unset;box-sizing:border-box;display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:10px 12px;border-bottom:1px solid var(--rule);cursor:pointer;font-size:15.5px;min-height:44px}
+.sugg button:last-child{border-bottom:0}
+.sugg button.act{background:var(--chip)}
+.sugg small{color:var(--muted);font-size:12.5px;white-space:nowrap}
+textarea.ed-body{font-family:var(--f-ui);font-size:16.5px;line-height:1.55;min-height:46vh;resize:none;overflow:hidden}
+.conn{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--rule);padding-top:14px;margin-top:6px}
+.conn .chips{display:flex;flex-wrap:wrap;gap:6px}
+.chipbtn{border:1px solid var(--rule);background:var(--panel);border-radius:999px;padding:6px 12px;font-size:14.5px}
+.chipbtn.missing{border-style:dashed;color:var(--muted)}
+.prose a.wl.wl-missing{color:var(--muted);border-bottom:0;text-decoration-style:dashed;text-decoration-color:var(--muted)}
+.trashbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.trashbar span{flex:1;min-width:160px}
+mark{background:color-mix(in srgb,var(--sup) 35%,transparent);color:inherit;border-radius:2px}
+/* graph: one colour per note group */
+:root{--g0:#B23A2B;--g1:#2F6F8F;--g2:#8A6A1E;--g3:#6B4E8C;--g4:#3F7A4E;--g5:#7A5A44;--g6:#7B848A}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--g0:#F08A6C;--g1:#6FB4D6;--g2:#D9B45A;--g3:#B49AD8;--g4:#7FC08E;--g5:#C9A283;--g6:#9AA3A8}}
+:root[data-theme="dark"]{--g0:#F08A6C;--g1:#6FB4D6;--g2:#D9B45A;--g3:#B49AD8;--g4:#7FC08E;--g5:#C9A283;--g6:#9AA3A8}
+.graph{flex:1;min-height:0;position:relative;background:var(--bg);overflow:hidden}
+#graphCv{display:block;width:100%;height:100%;touch-action:none;cursor:grab;outline:none}
+.glegend{position:absolute;top:0;left:0;right:0;display:flex;gap:14px;overflow-x:auto;scrollbar-width:none;padding:9px max(16px,env(safe-area-inset-right,0px)) 9px max(16px,env(safe-area-inset-left,0px));font-size:13px;color:var(--muted);background:color-mix(in srgb,var(--bg) 88%,transparent);border-bottom:1px solid var(--rule)}
+.glegend::-webkit-scrollbar{display:none}
+.glegend span{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.glegend i{flex:none;width:10px;height:10px;border-radius:50%}
+.glegend i.un{border:1.5px dashed var(--muted)}
+.gfit{position:absolute;top:50px;right:max(12px,env(safe-area-inset-right,0px));font-size:13.5px;background:var(--panel);border:1px solid var(--rule);border-radius:7px;padding:7px 12px;min-height:36px;box-shadow:0 1px 3px var(--shadow)}
+.gsel{position:absolute;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:12px;display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--panel);border:1px solid var(--rule);border-radius:10px;box-shadow:0 4px 14px var(--shadow)}
+.gsel div{flex:1;min-width:0;display:flex;flex-direction:column}
+.gsel b{font-size:16px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gsel span{font-size:13px;color:var(--muted)}
+.gsel.idle b{font-weight:500;font-size:14.5px;white-space:normal}
+

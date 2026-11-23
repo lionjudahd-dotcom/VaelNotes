@@ -1,0 +1,58 @@
+    <!-- NOTES -->
+    <section class="view" id="v-notes" aria-label="Notes">
+      <nav class="subtabs" id="noteTabs" role="tablist" aria-label="Note groups"></nav>
+      <div class="pane" id="notesPane">
+        <div class="inner">
+          <label class="search" for="noteSearch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input type="search" id="noteSearch" placeholder="Search all notes" autocomplete="off"></label>
+          <p class="sub" id="groupDesc"></p>
+          <div class="list" id="noteList"><div class="row"><span class="t muted">Loading notes…</span></div></div>
+          <p class="sub" id="notesStamp"></p>
+          <div style="height:64px" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="graph" id="graphView" hidden>
+        <canvas id="graphCv" aria-label="Graph of the notes and the links between them. The same connections are listed at the bottom of each note."></canvas>
+        <div class="glegend" id="graphLegend"></div>
+        <button type="button" class="gfit" id="graphFit">Fit all</button>
+        <div class="gsel idle" id="graphSel"><div><b id="gselTitle"></b><span id="gselMeta"></span></div><button type="button" class="btn" id="gselOpen" hidden>Open</button></div>
+      </div>
+      <button class="btn fab" id="newNoteBtn" type="button" hidden><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New note</button>
+      <div class="reader" id="reader" hidden>
+        <div class="rhead">
+          <button class="back" id="readerBack" type="button"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span id="backLbl">Back</span></button>
+          <span class="crumb" id="readerCrumb"></span>
+          <button class="btn ghost" id="editBtn" type="button" hidden>Edit</button>
+          <button class="btn" id="saveNoteBtn" type="button" hidden>Save</button>
+        </div>
+        <div class="smsg" id="noteMsg" role="status"></div>
+        <div class="pane" id="readerPane">
+          <div class="inner" id="readerBody"></div>
+          <form class="inner editor" id="editor" hidden autocomplete="off">
+            <label class="fld" for="edTitle">Title<input type="text" id="edTitle" class="ed-title" placeholder="Note title"></label>
+            <label class="fld" for="edFolder">Section<select id="edFolder"></select></label>
+            <div class="edbar">
+              <div class="edtools" role="toolbar" aria-label="Formatting">
+                <button type="button" class="link" data-fmt="link" aria-label="Link to another note">[[ Link</button>
+                <button type="button" data-fmt="h" aria-label="Heading">H</button>
+                <button type="button" data-fmt="b" aria-label="Bold"><b>B</b></button>
+                <button type="button" data-fmt="i" aria-label="Italic"><i>I</i></button>
+                <button type="button" data-fmt="ul" aria-label="Bullet list">List</button>
+                <button type="button" data-fmt="task" aria-label="Checkbox item">Task</button>
+                <span class="sp"></span>
+                <button type="button" id="prevBtn" aria-pressed="false">Preview</button>
+              </div>
+              <div class="sugg" id="sugg" hidden></div>
+            </div>
+            <label class="fld" for="edBody" id="edBodyWrap"><span class="vh">Note text</span><textarea id="edBody" class="ed-body" spellcheck="true" placeholder="Write here. Type [[ to link another note."></textarea></label>
+            <div class="prose" id="edPreview" hidden></div>
+            <p class="hint">Type <code>[[</code> or tap <b>[[ Link</b> to connect another note. You can link a note that doesn't exist yet: the link shows dashed, and tapping it later creates that note.</p>
+            <div class="sacts">
+              <button class="btn ghost" id="histBtn" type="button">History</button>
+              <button class="btn danger" id="trashBtn" type="button">Move to trash</button>
+            </div>
+            <div class="list" id="histList" hidden></div>
+          </form>
+        </div>
+      </div>
+    </section>
+

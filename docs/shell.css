@@ -1,0 +1,54 @@
+/* Vael Notes shell: sign-in gate, settings and the few extras the app adds on top of the page. Uses the page's colour tokens. */
+.iconbtn{flex:none;width:40px;height:40px;display:grid;place-items:center;background:none;border:1px solid transparent;border-radius:8px;color:var(--muted)}
+.iconbtn:hover{border-color:var(--rule);color:var(--ink)}
+.iconbtn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.appbanner{flex:none;padding:8px max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px));background:var(--chip);border-bottom:1px solid var(--rule);font-size:14px;color:var(--ink)}
+
+input[type="email"],input[type="password"]{font:inherit;font-size:16px;color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:7px;padding:10px 12px;min-width:0;width:100%}
+
+/* reading text size */
+html[data-text="s"] .prose{font-size:15.5px}
+html[data-text="l"] .prose{font-size:20px}
+html[data-text="s"] textarea.ed-body{font-size:16px}
+html[data-text="l"] textarea.ed-body{font-size:18.5px}
+.edcount{text-align:right;font-variant-numeric:tabular-nums}
+
+/* sign-in gate */
+.gate{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:max(28px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(28px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.gatebox{width:100%;max-width:400px;margin-block:auto;display:flex;flex-direction:column;gap:14px}
+.gate-eyebrow{margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.gatebox h1{margin:0;font-family:var(--f-display);font-weight:400;font-size:44px;line-height:1}
+.gate-sub{margin:0;color:var(--muted)}
+.gate-load{color:var(--muted);padding:20px 0}
+.gate-tabs{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--rule);border-radius:9px;overflow:hidden;background:var(--panel)}
+.gate-tabs button{background:none;border:0;padding:10px 6px;font-size:15px;min-height:44px}
+.gate-tabs button+button{border-left:1px solid var(--rule)}
+.gate-tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);font-weight:700}
+.gate form,#gateForms,#noAccess{display:flex;flex-direction:column;gap:12px}
+.gate .btn{min-height:46px;font-size:16px}
+.gate-hint{margin:0;font-size:13.5px;color:var(--muted)}
+.gate-msg{margin:0;min-height:1.4em;font-size:14.5px;color:var(--muted)}
+.gate-msg.err{color:var(--key)}
+
+/* settings */
+.setsec{display:flex;flex-direction:column;gap:12px;padding-bottom:18px;border-bottom:1px solid var(--rule)}
+.setsec:last-child{border-bottom:0}
+.segbtn{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1px solid var(--rule);border-radius:8px;overflow:hidden;background:var(--panel)}
+.segbtn button{background:none;border:0;padding:9px 6px;font-size:14.5px;font-weight:400;letter-spacing:0;min-height:42px}
+.segbtn button+button{border-left:1px solid var(--rule)}
+.segbtn button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.setrow{display:flex;flex-direction:column;gap:10px}
+.setrow .btn,.setsec>.btn{align-self:flex-start}
+.setbtns{display:flex;flex-wrap:wrap;gap:8px}
+.prow{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-bottom:1px solid var(--rule)}
+.prow:last-child{border-bottom:0}
+.prow>div:first-child{display:flex;flex-direction:column;min-width:0}
+.prow b{overflow-wrap:anywhere}
+.prow span{font-size:13.5px;color:var(--muted);overflow-wrap:anywhere}
+.prow code{font-family:var(--f-mono);font-size:13px;background:var(--chip);padding:1px 5px;border-radius:3px;color:var(--ink);user-select:all}
+.pctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pctl select{width:auto;flex:1;min-width:120px}
+.pctl .btn{font-size:13.5px;padding:6px 10px;min-height:38px}
+.invbox{display:flex;flex-direction:column;gap:10px;padding:12px 14px;border:1px solid var(--key);border-radius:10px;background:var(--panel)}
+.invbox .btn{align-self:flex-start}
+.list:empty{display:none}
