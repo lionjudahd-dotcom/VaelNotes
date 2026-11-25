@@ -207,32 +207,51 @@
   $('naOut').addEventListener('click', signOut);
   async function signOut(){
     try { if (sb) await sb.auth.signOut(); } catch {}
-    for (const k of ['vael.cache.notes', 'vael.cache.npcs', 'vael.cache.island', 'vael.me']) ls.del(k);
+    for (const k of ['vael.cache.notes', 'vael.cache.npcs', 'vael.cache.island', 'vael.cache.mapedits', 'vael.me']) ls.del(k);
     location.reload();
   }
   function goOffline(me){
     S.me = me; S.offline = true; gate.hidden = true; banner('You\'re offline. This is the copy saved on this device, and it can\'t be edited until you\'re back online.');
     window.addEventListener('online', () => location.reload());
-    resolveReady(); runIsland(readJSON('vael.cache.island'));
+    resolveReady(); runIsland(readJSON('vael.cache.island'), readJSON('vael.cache.mapedits'));
   }
   // The island map's scripts live in the database (team only), not in the public site. After sign-in they are
   // fetched, kept on this device for offline use, and run once as ordinary page scripts, in order.
+  // The owner's map edits (table map_edits, one row 'main') are loaded first, because the map applies them
+  // while it generates. window.vaelMap is how the map's editor saves them.
   let islandRan = false;
-  function runIsland(files){
+  function runIsland(files, edits){
     if (islandRan || !Array.isArray(files) || !files.length) return;
     islandRan = true;
+    window.VAEL_MAP_EDITS = edits && typeof edits === 'object' ? edits : {};
     for (const f of files){
       const s = document.createElement('script');
       s.textContent = f.body + '\n//# sourceURL=island/' + f.name;
       document.body.appendChild(s);
     }
   }
+  window.vaelMap = {
+    canEdit: () => !!S.me && !S.offline && S.me.role === 'owner',
+    async save(data){
+      if (!window.vaelMap.canEdit()) throw new Error('Only the owner can edit the map.');
+      const { error } = await sb.from('map_edits').upsert({ id: 'main', data, updated_at: new Date().toISOString() });
+      if (error) throw new Error(error.message);
+      ls.set('vael.cache.mapedits', JSON.stringify(data));
+    }
+  };
   async function loadIsland(){
     try {
-      const { data, error } = await sb.from('private_files').select('name, body').order('ord');
-      if (!error && data && data.length){ ls.set('vael.cache.island', JSON.stringify(data)); runIsland(data); return; }
+      const [files, edits] = await Promise.all([
+        sb.from('private_files').select('name, body').order('ord'),
+        sb.from('map_edits').select('data').eq('id', 'main').maybeSingle()
+      ]);
+      if (!files.error && files.data && files.data.length){
+        const e = edits.error ? readJSON('vael.cache.mapedits') : (edits.data ? edits.data.data : {});
+        ls.set('vael.cache.island', JSON.stringify(files.data)); ls.set('vael.cache.mapedits', JSON.stringify(e || {}));
+        runIsland(files.data, e); return;
+      }
     } catch {}
-    runIsland(readJSON('vael.cache.island'));
+    runIsland(readJSON('vael.cache.island'), readJSON('vael.cache.mapedits'));
   }
   // Called once a session exists: find this person on the team, then let the page load its data.
   async function enter(){
