@@ -207,6 +207,10 @@ textarea.zc-in{font-family:var(--f-mono);font-size:16px;line-height:1.5;min-heig
 .zc-out .bad{color:var(--key);text-decoration:underline wavy var(--key);text-underline-offset:4px}
 .zc-out .sep{color:var(--sup)}
 .zc-out .ph{font-family:var(--f-ui);font-size:14.5px;color:var(--muted)}
+.zc-pron{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin:0;padding:8px 12px;border-left:3px solid var(--sup);background:var(--bg);border-radius:6px}
+.zc-pron .label{flex:none}
+.zc-pron-t{font-family:var(--f-mono);font-size:15px;letter-spacing:.02em;overflow-wrap:anywhere}
+.zc .zc-pkey{font-size:13px}
 .zc .zc-warn,.zc .sub{margin:0}
 .zc-warn{padding:8px 12px;border-left:3px solid var(--key);background:var(--chip);border-radius:6px;font-size:14px}
 .zc-warn b{color:var(--key)}
@@ -919,6 +923,24 @@ function zSyl(w){
   return out;
 }
 const zSay = w => zSyl(w).map((x, i) => i ? x.toLowerCase() : x.toUpperCase()).join('-');
+// Say it in English spelling, following the sounds in the Zurivel Alphabet note: the stressed first syllable in
+// capitals (KROHNG-hahth). A doubled vowel is held long (šaar: SHAAHR).
+const Z_SAYV = { a: 'ah', æ: 'a', e: 'eh', i: 'ee', o: 'oh', ø: 'ur', u: 'oo', y: 'uh' };
+const Z_SAYL = { a: 'aah', æ: 'aa', e: 'ehh', i: 'eee', o: 'ohh', ø: 'urr', u: 'ooo', y: 'uhh' };
+const Z_SAYC = { č: 'ch', ð: 'dh', ŋ: 'ng', š: 'sh', þ: 'th', ž: 'zh' };
+function zPron(w){
+  if (!/[aæeioøuy]/i.test(w)) return w;
+  return zSyl(w).map((syl, n) => {
+    const s = syl.toLowerCase(); let o = '';
+    for (let i = 0; i < s.length; i++){
+      const c = s[i];
+      if (Z_SAYV[c]){ if (s[i + 1] === c){ o += Z_SAYL[c]; i++; } else o += Z_SAYV[c]; }
+      else o += Z_SAYC[c] || c;
+    }
+    return n ? o : o.toUpperCase();
+  }).join('-');
+}
+const zPronLine = text => (text.match(/[A-Za-zÀ-ɏ']+|[.,!?;:]/g) || []).reduce((s, t) => /^[.,!?;:]$/.test(t) ? s + t : s + (s ? ' ' : '') + zPron(t), '');
 function zAdd(root, end){
   if (end === 'ar' && Z_VOW.includes(root.slice(-1).toLowerCase())) return root + 'r';
   return root + end;
@@ -1057,7 +1079,7 @@ function enToZurivel(text){
 
     const out = [];   // units: {k:'w', z, parts, src} | {k:'np', ...} | {k:'p', t}
     let np = null, verbDone = false, cmdDone = false, tense = null, past = false, beSeen = false, bePast = false, neg = false, more = false, ofAt = -1, prev = 'start';
-    const newNP = () => ({ k: 'np', poss: [], num: null, noun: null, adjs: [], the: false, plural: false, possS: false, src: [] });
+    const newNP = () => ({ k: 'np', poss: [], num: null, pre: [], noun: null, adjs: [], the: false, plural: false, possS: false, src: [] });
     const flush = () => {
       if (!np) return;
       if (np.noun || np.adjs.length || np.poss.length || np.num){
@@ -1143,9 +1165,11 @@ function enToZurivel(text){
       if (t === 'verb'){ verbUnit(r, tk.t); continue; }
       if (t === 'noun' || (t === 'question' && r.e.senses.includes('how many'))){
         if (t === 'question'){ np = np || newNP(); np.num = r; prev = 'np'; continue; }
-        if (np && np.noun) flush();
+        // Two English nouns in a row ("death rift") work like a Zurivel compound: the first describes the second,
+        // stays bare and comes first, and the endings go on the last one (dø iluduren, the death rift).
+        if (np && np.noun){ if (np.noun.e && np.nounAt === i - 1) np.pre.push(np.noun); else flush(); }
         np = np || newNP();
-        np.noun = r; np.plural = !!r.f.plural && !np.num; np.possS = tk.poss; np.src.push(tk.t); prev = 'noun';
+        np.noun = r; np.nounAt = i; np.plural = !!r.f.plural && !np.num; np.possS = tk.poss; np.src.push(tk.t); prev = 'noun';
         if (!(nx && !nx.p && enReadings(d, nx.w).some(x => x.e.type === 'noun') && !enReadings(d, nx.w).some(x => x.e.type === 'verb'))) flush();
         if (prev === 'noun' && !verbDone) prev = 'subj';
         continue;
@@ -1184,6 +1208,7 @@ function enToZurivel(text){
       }
       for (const p of u.poss) push(p.e.z, [{ z: p.e.z, g: p.e.gloss }], p.e.gloss);
       if (u.num) push(u.num.e.z, [{ z: u.num.e.z, g: u.num.e.gloss }], u.num.e.gloss);
+      for (const p of u.pre) push(p.e.z, [{ z: p.e.z, g: p.e.gloss }], p.e.gloss);
       if (u.noun){
         let z = u.noun.name || u.noun.e.z; const parts = [{ z, g: u.noun.name ? 'name' : u.noun.e.gloss }];
         if (u.plural){ const before = z; z = zAdd(z, 'ar'); parts.push({ z: '-' + z.slice(before.length), g: 'plural' }); }
@@ -1274,12 +1299,14 @@ function mountZurivel(root){
       <textarea class="zc-in" rows="3" spellcheck="false" autocomplete="off" autocapitalize="sentences" aria-label="Text to translate"></textarea>
       <div class="zc-keys" aria-label="Insert a special letter">${Z_KEYS.map(([l, k, s]) => `<button type="button" data-zk="${l}" title="${esc(s)} (type ${k})">${l}</button>`).join('')}</div>
       <div class="zc-out" aria-live="polite"></div>
+      <p class="zc-pron" hidden><span class="label">Say it</span><span class="zc-pron-t"></span></p>
       <p class="zc-warn" hidden></p>
       <p class="sub zc-gone" hidden></p>
       <div class="zc-acts"><button type="button" data-za="copy">Copy</button><button type="button" data-za="swap">Swap</button><span class="zc-msg" role="status"></span></div>
       <div class="zc-say"></div>
-      <p class="sub zc-src"></p>`;
-    const inp = el.querySelector('.zc-in'), out = el.querySelector('.zc-out'), warn = el.querySelector('.zc-warn'), gone = el.querySelector('.zc-gone'), say = el.querySelector('.zc-say'), msg = el.querySelector('.zc-msg'), src = el.querySelector('.zc-src'), keys = el.querySelector('.zc-keys');
+      <p class="sub zc-src"></p>
+      <p class="sub zc-pkey">How to read “Say it”: capitals are the stressed syllable. <b>ah</b> as in father, <b>a</b> as in cat, <b>eh</b> as in bed, <b>ee</b> as in see, <b>oh</b> as in go (no glide), <b>ur</b> as in fur (no r), <b>oo</b> as in moon, <b>uh</b> as in about; <b>th</b> as in thin, <b>dh</b> as in this, <b>zh</b> as in measure, <b>g</b> always as in go, <b>r</b> a light tap. A doubled vowel (aah) is held long.</p>`;
+    const inp = el.querySelector('.zc-in'), out = el.querySelector('.zc-out'), warn = el.querySelector('.zc-warn'), gone = el.querySelector('.zc-gone'), say = el.querySelector('.zc-say'), msg = el.querySelector('.zc-msg'), src = el.querySelector('.zc-src'), keys = el.querySelector('.zc-keys'), pron = el.querySelector('.zc-pron'), pronT = el.querySelector('.zc-pron-t');
     let last = null;
     const flash = t => { msg.textContent = t; clearTimeout(flash.h); flash.h = setTimeout(() => { msg.textContent = ''; }, 1600); };
     const draw = () => {
@@ -1289,7 +1316,7 @@ function mountZurivel(root){
       inp.placeholder = zcState.fwd ? 'Type English, e.g. We will not go to the market.' : 'Type Zurivel, e.g. Miar karul nu ta chaten (ch, sh, th… become č, š, þ)';
       const d = zDict();
       src.textContent = d.note ? `Knows ${d.n.toLocaleString('en-US')} words from the Zurivel Dictionary note. Add a row there to teach it a new word.` : 'Can\'t find the Zurivel Dictionary note, so no words are known yet.';
-      if (!inp.value.trim()){ out.innerHTML = '<span class="ph">The translation appears here.</span>'; out.classList.toggle('key', !zcState.fwd); warn.hidden = gone.hidden = true; say.innerHTML = ''; last = null; return; }
+      if (!inp.value.trim()){ out.innerHTML = '<span class="ph">The translation appears here.</span>'; out.classList.toggle('key', !zcState.fwd); warn.hidden = gone.hidden = pron.hidden = true; say.innerHTML = ''; last = null; return; }
       const r = last = zcState.fwd ? enToZurivel(inp.value) : zurivelToEnglish(inp.value);
       out.classList.toggle('key', !zcState.fwd);
       if (zcState.fwd){
@@ -1303,12 +1330,16 @@ function mountZurivel(root){
           return h + esc(s.text.slice(-1).match(/[.!?]/) ? s.text.slice(-1) : '');
         }).join(' ');
       } else out.innerHTML = esc(r.text).replace(/\[([^\]]+)\]/g, '<span class="bad">$1</span>');
+      // The whole line, said out loud: the Zurivel result, or the Zurivel that was typed. Unknown English words are left out.
+      const zText = zcState.fwd ? r.sentences.map(s => s.words.filter(x => !x.bad).map(x => x.p || x.z).join(' ') + (s.text.slice(-1).match(/[.!?]/) ? s.text.slice(-1) : '')).join(' ') : zType(inp.value);
+      const line = zPronLine(zText);
+      pron.hidden = !line; pronT.textContent = line;
       warn.hidden = !r.missing.length;
       if (r.missing.length) warn.innerHTML = `<b>${r.missing.map(esc).join(', ')}</b> ${r.missing.length > 1 ? 'aren\'t' : 'isn\'t'} in the Zurivel Dictionary yet. Add ${r.missing.length > 1 ? 'them' : 'it'} as a row there and the translator will know ${r.missing.length > 1 ? 'them' : 'it'}.`;
       gone.hidden = !(zcState.fwd && r.dropped.length);
       if (zcState.fwd && r.dropped.length) gone.textContent = 'Handled by endings or left out (Zurivel has no "a" and no "to be"): ' + r.dropped.join(', ') + '.';
       const seen = new Set(), rows = r.rows.filter(x => { const k = x.z.toLowerCase(); return !seen.has(k) && seen.add(k); });
-      say.innerHTML = rows.slice(0, 14).map(x => `<div class="zc-word"><div><b>${esc(x.z)}</b><small>${esc(zSay(x.z))}${x.src && zcState.fwd ? ' · from “' + esc(x.src) + '”' : ''}</small></div><div class="zc-chips">${(x.parts || []).map(p => `<span${p.z.startsWith('-') || p.z.endsWith('-') ? ' class="v"' : ''}><i>${esc(p.z)}</i>${esc(p.g || '')}</span>`).join('')}</div></div>`).join('') + (rows.length > 14 ? `<p class="sub">+ ${rows.length - 14} more words</p>` : '');
+      say.innerHTML = rows.slice(0, 14).map(x => `<div class="zc-word"><div><b>${esc(x.z)}</b><small>say ${esc(zPron(x.z))}${x.src && zcState.fwd ? ' · from “' + esc(x.src) + '”' : ''}</small></div><div class="zc-chips">${(x.parts || []).map(p => `<span${p.z.startsWith('-') || p.z.endsWith('-') ? ' class="v"' : ''}><i>${esc(p.z)}</i>${esc(p.g || '')}</span>`).join('')}</div></div>`).join('') + (rows.length > 14 ? `<p class="sub">+ ${rows.length - 14} more words</p>` : '');
     };
     inp.value = zcState.text;
     inp.addEventListener('input', () => {
