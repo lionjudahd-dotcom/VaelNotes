@@ -25,6 +25,39 @@ textarea.ed-body{font-family:var(--f-ui);font-size:16.5px;line-height:1.55;min-h
 .trashbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .trashbar span{flex:1;min-width:160px}
 mark{background:color-mix(in srgb,var(--sup) 35%,transparent);color:inherit;border-radius:2px}
+/* Zurivel converter (a ```zurivel block inside a note) */
+.zc{display:flex;flex-direction:column;gap:10px;margin:0 0 1em;padding:12px 14px 14px;border:1px solid var(--rule);border-radius:10px;background:var(--panel);font-family:var(--f-ui);font-size:15px;line-height:1.4;overflow-wrap:normal}
+.zc-top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}
+.zc-mode{display:flex;border:1px solid var(--rule);border-radius:999px;padding:2px;background:var(--bg)}
+.zc-mode button{border:0;background:none;border-radius:999px;padding:5px 11px;font-size:13.5px;color:var(--muted)}
+.zc-mode button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:700}
+textarea.zc-in{font-family:var(--f-mono);font-size:16px;line-height:1.5;min-height:4.8em;background:var(--bg)}
+.zc-keys{display:flex;flex-wrap:wrap;gap:6px}
+.zc-keys button{min-width:40px;height:38px;border:1px solid var(--rule);background:var(--bg);border-radius:7px;font-family:var(--f-read);font-size:19px;line-height:1}
+.zc-out{min-height:2.2em;padding:10px 12px;border-radius:8px;background:var(--chip);font-family:var(--f-read);font-size:24px;line-height:1.35;white-space:pre-wrap;overflow-wrap:anywhere}
+.zc-out.key{font-family:var(--f-mono);font-size:16px;line-height:1.5}
+.zc-out .bad{color:var(--key);text-decoration:underline wavy var(--key);text-underline-offset:4px}
+.zc-out .sep{color:var(--sup)}
+.zc-out .ph{font-family:var(--f-ui);font-size:14.5px;color:var(--muted)}
+.zc .zc-warn,.zc .sub{margin:0}
+.zc-warn{padding:8px 12px;border-left:3px solid var(--key);background:var(--chip);border-radius:6px;font-size:14px}
+.zc-warn b{color:var(--key)}
+.zc-acts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.zc-acts button{border:1px solid var(--rule);background:var(--panel);border-radius:7px;padding:6px 12px;font-size:14px;min-height:36px}
+.zc-msg{font-size:13.5px;color:var(--ok)}
+.zc-say{display:flex;flex-direction:column}
+.zc-word{display:grid;grid-template-columns:minmax(90px,150px) minmax(0,1fr);gap:10px;padding:10px 0;border-top:1px solid var(--rule)}
+@media (max-width:520px){ .zc-word{grid-template-columns:minmax(0,1fr);gap:6px} }
+.zc-word b{display:block;font-family:var(--f-read);font-size:21px;font-weight:500;line-height:1.15}
+.zc-word small{font-size:12.5px;color:var(--muted)}
+.zc-word small.known{color:var(--sup);font-weight:700}
+.zc-chips{display:flex;flex-wrap:wrap;gap:5px;min-width:0}
+.zc-chips span{display:flex;flex-direction:column;padding:4px 8px;border:1px solid var(--rule);border-radius:6px;font-size:11.5px;color:var(--muted);line-height:1.25}
+.zc-chips i{font-style:normal;font-family:var(--f-read);font-size:18px;color:var(--ink)}
+.zc-chips .v{background:color-mix(in srgb,var(--g1) 14%,transparent);border-color:transparent}
+.zc-chips .v i{color:var(--g1)}
+.zc-chips .x{background:color-mix(in srgb,var(--key) 14%,transparent);border-color:transparent}
+.zc-chips .x i{color:var(--key)}
 /* graph: one colour per note group */
 :root{--g0:#B23A2B;--g1:#2F6F8F;--g2:#8A6A1E;--g3:#6B4E8C;--g4:#3F7A4E;--g5:#7A5A44;--g6:#7B848A}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--g0:#F08A6C;--g1:#6FB4D6;--g2:#D9B45A;--g3:#B49AD8;--g4:#7FC08E;--g5:#C9A283;--g6:#9AA3A8}}

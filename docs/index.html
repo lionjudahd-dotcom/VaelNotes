@@ -193,6 +193,39 @@ textarea.ed-body{font-family:var(--f-ui);font-size:16.5px;line-height:1.55;min-h
 .trashbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .trashbar span{flex:1;min-width:160px}
 mark{background:color-mix(in srgb,var(--sup) 35%,transparent);color:inherit;border-radius:2px}
+/* Zurivel converter (a ```zurivel block inside a note) */
+.zc{display:flex;flex-direction:column;gap:10px;margin:0 0 1em;padding:12px 14px 14px;border:1px solid var(--rule);border-radius:10px;background:var(--panel);font-family:var(--f-ui);font-size:15px;line-height:1.4;overflow-wrap:normal}
+.zc-top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}
+.zc-mode{display:flex;border:1px solid var(--rule);border-radius:999px;padding:2px;background:var(--bg)}
+.zc-mode button{border:0;background:none;border-radius:999px;padding:5px 11px;font-size:13.5px;color:var(--muted)}
+.zc-mode button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:700}
+textarea.zc-in{font-family:var(--f-mono);font-size:16px;line-height:1.5;min-height:4.8em;background:var(--bg)}
+.zc-keys{display:flex;flex-wrap:wrap;gap:6px}
+.zc-keys button{min-width:40px;height:38px;border:1px solid var(--rule);background:var(--bg);border-radius:7px;font-family:var(--f-read);font-size:19px;line-height:1}
+.zc-out{min-height:2.2em;padding:10px 12px;border-radius:8px;background:var(--chip);font-family:var(--f-read);font-size:24px;line-height:1.35;white-space:pre-wrap;overflow-wrap:anywhere}
+.zc-out.key{font-family:var(--f-mono);font-size:16px;line-height:1.5}
+.zc-out .bad{color:var(--key);text-decoration:underline wavy var(--key);text-underline-offset:4px}
+.zc-out .sep{color:var(--sup)}
+.zc-out .ph{font-family:var(--f-ui);font-size:14.5px;color:var(--muted)}
+.zc .zc-warn,.zc .sub{margin:0}
+.zc-warn{padding:8px 12px;border-left:3px solid var(--key);background:var(--chip);border-radius:6px;font-size:14px}
+.zc-warn b{color:var(--key)}
+.zc-acts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.zc-acts button{border:1px solid var(--rule);background:var(--panel);border-radius:7px;padding:6px 12px;font-size:14px;min-height:36px}
+.zc-msg{font-size:13.5px;color:var(--ok)}
+.zc-say{display:flex;flex-direction:column}
+.zc-word{display:grid;grid-template-columns:minmax(90px,150px) minmax(0,1fr);gap:10px;padding:10px 0;border-top:1px solid var(--rule)}
+@media (max-width:520px){ .zc-word{grid-template-columns:minmax(0,1fr);gap:6px} }
+.zc-word b{display:block;font-family:var(--f-read);font-size:21px;font-weight:500;line-height:1.15}
+.zc-word small{font-size:12.5px;color:var(--muted)}
+.zc-word small.known{color:var(--sup);font-weight:700}
+.zc-chips{display:flex;flex-wrap:wrap;gap:5px;min-width:0}
+.zc-chips span{display:flex;flex-direction:column;padding:4px 8px;border:1px solid var(--rule);border-radius:6px;font-size:11.5px;color:var(--muted);line-height:1.25}
+.zc-chips i{font-style:normal;font-family:var(--f-read);font-size:18px;color:var(--ink)}
+.zc-chips .v{background:color-mix(in srgb,var(--g1) 14%,transparent);border-color:transparent}
+.zc-chips .v i{color:var(--g1)}
+.zc-chips .x{background:color-mix(in srgb,var(--key) 14%,transparent);border-color:transparent}
+.zc-chips .x i{color:var(--key)}
 /* graph: one colour per note group */
 :root{--g0:#B23A2B;--g1:#2F6F8F;--g2:#8A6A1E;--g3:#6B4E8C;--g4:#3F7A4E;--g5:#7A5A44;--g6:#7B848A}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--g0:#F08A6C;--g1:#6FB4D6;--g2:#D9B45A;--g3:#B49AD8;--g4:#7FC08E;--g5:#C9A283;--g6:#9AA3A8}}
@@ -834,6 +867,8 @@ function wikiToMd(md){
 if (window.marked) window.marked.use({ renderer: {
   html(h){ return esc(h); },
   image(href, title, text){ return esc(text || ''); },
+  // A ```zurivel block in a note becomes a live Zurivel converter (mounted by mountZurivel).
+  code(code, lang){ return String(lang || '').trim().toLowerCase() === 'zurivel' ? '<div class="zc" data-zc></div>' : false; },
   link(href, title, text){
     href = String(href || '');
     if (href.startsWith('#wl:')){
@@ -844,6 +879,110 @@ if (window.marked) window.marked.use({ renderer: {
   }
 } });
 function renderMd(md){ return window.marked ? window.marked.parse(wikiToMd(md), { gfm: true, breaks: false }) : `<pre style="white-space:pre-wrap">${esc(md)}</pre>`; }
+
+// ---------- Zurivel converter ----------
+// The Zurivel alphabet: [letter, sound, keyboard typing, example word, meaning]. Order = Zurivel alphabetical order.
+const ZL = [
+  ['a','a in father','a','an','one'], ['æ','a in cat','ae','hær','man'], ['b','b in bat','b','boþ','bread'],
+  ['č','ch in chat','ch','čat','market'], ['d','d in dog','d','dun','house'], ['ð','th in this','dh','ðik','to see'],
+  ['e','e in bed','e','kel','fire'], ['f','f in fan','f','fen','fish'], ['g','g in go, always hard','g','grak','wolf'],
+  ['h','h in hat','h','haþ','hill'], ['i','ee in machine','i','lin','person'], ['k','k in kit','k','kar','to go'],
+  ['l','l in lip','l','lum','bright'], ['m','m in man','m','mena','moon'], ['n','n in net','n','nor','good'],
+  ['ŋ','ng in sing','ng','kroŋ','stone'], ['o','o in go, with no glide','o','tor','ground'], ['ø','ur in fur, without the r','oe','grø','bad'],
+  ['p','p in pat','p','pil','bird'], ['r','a light tapped r','r','rok','road'], ['s','s in sit','s','sel','friend'],
+  ['š','sh in ship','sh','šik','sword'], ['t','t in tap','t','tir','three'], ['þ','th in thin','th','vaþ','water'],
+  ['u','oo in moon','u','zuri','sun'], ['v','v in van','v','vin','wind'], ['w','w in wet','w','wel','tree'],
+  ['y','a in about, short and weak','y','tyl','story'], ['z','z in zoo','z','zol','gold'], ['ž','s in measure','zh','žel','shadow']
+].map((r, i) => ({ lo: r[0], sound: r[1], key: r[2], ex: r[3], gloss: r[4], pos: i, vowel: 'aæeioøuy'.includes(r[0]) }));
+const ZBY = {}, ZDI = {}, ZDICT = {};
+for (const L of ZL){ ZBY[L.lo] = L; ZDICT[L.ex] = L.gloss; if (L.key.length === 2) ZDI[L.key] = L.lo; }
+const zUpper = c => c !== c.toLowerCase(), zLetter = c => /\p{L}/u.test(c), zApos = c => c === "'" || c === '’';
+// Keyboard -> Zurivel. Two-key combos (ae, ch, dh, ng, oe, sh, th, zh) win; an apostrophe between them keeps them apart (n'g).
+function zToZ(src){
+  const t = [];
+  for (let i = 0; i < src.length;){
+    const c = src[i];
+    if (zApos(c) && i > 0 && i < src.length - 1 && ZDI[(src[i - 1] + src[i + 1]).toLowerCase()]){ i++; continue; }
+    const two = src.substr(i, 2).toLowerCase();
+    if (two.length === 2 && ZDI[two]){ const lo = ZDI[two]; t.push({ k: 'L', lo, text: zUpper(c) ? lo.toUpperCase() : lo }); i += 2; continue; }
+    const lo = c.toLowerCase();
+    t.push(ZBY[lo] ? { k: 'L', lo, text: c } : { k: zLetter(c) ? 'bad' : 'o', text: c }); i++;
+  }
+  return t;
+}
+// Zurivel -> keyboard. Adds an apostrophe where two single letters would otherwise read as a combo.
+function zToKey(src){
+  const t = []; let prev = null;
+  for (const c of src){
+    const L = ZBY[c.toLowerCase()];
+    if (!L){ t.push({ k: zLetter(c) ? 'bad' : 'o', text: c }); prev = null; continue; }
+    let p = L.key; if (zUpper(c)) p = p[0].toUpperCase() + p.slice(1);
+    if (prev && prev.length === 1 && ZDI[(prev + p[0]).toLowerCase()]) t.push({ k: 'sep', text: "'" });
+    t.push({ k: 'L', lo: L.lo, text: p }); prev = p;
+  }
+  return t;
+}
+const zJoin = t => t.map(x => x.text).join('');
+function zCmp(a, b){
+  const k = s => [...s.toLowerCase()].filter(c => ZBY[c]).map(c => ZBY[c].pos), x = k(a), y = k(b);
+  for (let i = 0; i < Math.min(x.length, y.length); i++) if (x[i] !== y[i]) return x[i] - y[i];
+  return x.length - y.length;
+}
+const zcState = { text: 'zhel dhik grak\nkrong, zol, shik', fwd: true };
+function mountZurivel(root){
+  for (const el of root.querySelectorAll('[data-zc]')){
+    el.removeAttribute('data-zc');
+    el.innerHTML = `<div class="zc-top"><span class="label">Zurivel converter</span><div class="zc-mode" role="group" aria-label="Direction"><button type="button" data-zm="1">Keyboard → Zurivel</button><button type="button" data-zm="0">Zurivel → Keyboard</button></div></div>
+      <textarea class="zc-in" rows="3" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Text to convert"></textarea>
+      <div class="zc-keys" aria-label="Insert a special letter">${ZL.filter(L => L.key.length === 2).map(L => `<button type="button" data-zk="${L.lo}" title="${esc(L.sound)} (type ${L.key})">${L.lo}</button>`).join('')}</div>
+      <div class="zc-out" aria-live="polite"></div>
+      <p class="zc-warn" hidden></p>
+      <div class="zc-acts"><button type="button" data-za="copy">Copy</button><button type="button" data-za="swap">Swap</button><button type="button" data-za="sort">Sort lines A–Ž</button><span class="zc-msg" role="status"></span></div>
+      <div class="zc-say"></div>`;
+    const inp = el.querySelector('.zc-in'), out = el.querySelector('.zc-out'), warn = el.querySelector('.zc-warn'), say = el.querySelector('.zc-say'), msg = el.querySelector('.zc-msg');
+    const conv = () => zcState.fwd ? zToZ(inp.value) : zToKey(inp.value);
+    const flash = t => { msg.textContent = t; clearTimeout(flash.h); flash.h = setTimeout(() => { msg.textContent = ''; }, 1600); };
+    const draw = () => {
+      zcState.text = inp.value;
+      for (const b of el.querySelectorAll('[data-zm]')) b.setAttribute('aria-pressed', String((b.dataset.zm === '1') === zcState.fwd));
+      inp.placeholder = zcState.fwd ? 'Type on a normal keyboard, e.g. krong' : 'Paste Zurivel letters, e.g. kroŋ';
+      const t = conv();
+      out.classList.toggle('key', !zcState.fwd);
+      out.innerHTML = inp.value.trim() ? t.map(x => x.k === 'bad' ? `<span class="bad">${esc(x.text)}</span>` : x.k === 'sep' ? `<span class="sep">${esc(x.text)}</span>` : esc(x.text)).join('') : '<span class="ph">The converted text appears here.</span>';
+      const bad = [...new Set(t.filter(x => x.k === 'bad').map(x => x.text.toLowerCase()))];
+      warn.hidden = !bad.length;
+      if (bad.length) warn.innerHTML = `<b>${bad.map(esc).join(', ')}</b> ${bad.length > 1 ? 'are not Zurivel letters' : 'is not a Zurivel letter'}. Zurivel has no c, j, q or x (c only appears inside ch).`;
+      // Letter-by-letter pronunciation, one row per distinct word.
+      const words = []; let cur = [];
+      for (const x of (zcState.fwd ? t : zToZ(inp.value))){ if (x.k === 'o'){ if (cur.length) words.push(cur); cur = []; } else cur.push(x); }
+      if (cur.length) words.push(cur);
+      const seen = new Set(), uniq = words.filter(w => { const s = zJoin(w).toLowerCase(); return !seen.has(s) && seen.add(s); });
+      say.innerHTML = uniq.slice(0, 8).map(w => {
+        const word = zJoin(w), g = ZDICT[word.toLowerCase()];
+        return `<div class="zc-word"><div><b>${esc(word)}</b><small${g ? ' class="known"' : ''}>${g ? '“' + esc(g) + '”' : 'not in the word list'}</small></div><div class="zc-chips">${w.map(x => x.k === 'bad'
+          ? `<span class="x"><i>${esc(x.text)}</i>not a letter</span>`
+          : `<span${ZBY[x.lo].vowel ? ' class="v"' : ''}><i>${esc(x.text)}</i>${esc(ZBY[x.lo].sound)}</span>`).join('')}</div></div>`;
+      }).join('') + (uniq.length > 8 ? `<p class="sub">+ ${uniq.length - 8} more words</p>` : '');
+    };
+    inp.value = zcState.text;
+    inp.addEventListener('input', draw);
+    el.addEventListener('click', e => {
+      const m = e.target.closest('[data-zm]'), k = e.target.closest('[data-zk]'), a = e.target.closest('[data-za]');
+      if (m){ zcState.fwd = m.dataset.zm === '1'; draw(); }
+      else if (k){ inp.focus(); inp.setRangeText(k.dataset.zk, inp.selectionStart, inp.selectionEnd, 'end'); draw(); }
+      else if (a && a.dataset.za === 'swap'){ inp.value = zJoin(conv()); zcState.fwd = !zcState.fwd; draw(); }
+      else if (a && a.dataset.za === 'sort'){
+        const z = l => zcState.fwd ? zJoin(zToZ(l)) : l;
+        inp.value = inp.value.split('\n').filter(l => l.trim()).sort((x, y) => zCmp(z(x), z(y))).join('\n'); draw(); flash('Sorted in Zurivel order');
+      } else if (a && a.dataset.za === 'copy'){
+        const text = zJoin(conv()); if (!text) return;
+        const fallback = () => { const r = document.createRange(); r.selectNodeContents(out); const s = getSelection(); s.removeAllRanges(); s.addRange(r); flash('Selected. Press Ctrl+C to copy.'); };
+        try { navigator.clipboard.writeText(text).then(() => flash('Copied'), fallback); } catch { fallback(); }
+      }
+    });
+    draw();
+  }
+}
 
 function connHtml(n){
   const seen = new Set(), outs = [];
@@ -863,6 +1002,7 @@ function showNote(n, keepScroll){
   if (!keepScroll) setNoteMsg('');
   const holder = document.createElement('div'); holder.className = 'prose'; holder.innerHTML = renderMd(n.body.replace(/^Status:.*\n?/m, ''));
   for (const t of holder.querySelectorAll('table')){ const w = document.createElement('div'); w.className = 'tbl'; t.replaceWith(w); w.appendChild(t); }
+  mountZurivel(holder);
   // Fold each ## section into a tap-to-open block so long notes stay short.
   const h2s = [...holder.querySelectorAll(':scope > h2')], fold = h2s.length >= 3;
   for (const h of h2s){
@@ -931,7 +1071,7 @@ function setPreview(on){
   nPreview = on; $('prevBtn').setAttribute('aria-pressed', String(on)); $('prevBtn').textContent = on ? 'Write' : 'Preview';
   $('edBodyWrap').hidden = on; $('edPreview').hidden = !on; $('sugg').hidden = true;
   for (const b of document.querySelectorAll('.edtools [data-fmt]')) b.disabled = on;
-  if (on) $('edPreview').innerHTML = renderMd(ta.value.replace(/^Status:.*\n?/m, '')) || '<p class="sub">Nothing to preview yet.</p>'; else autoGrow();
+  if (on){ $('edPreview').innerHTML = renderMd(ta.value.replace(/^Status:.*\n?/m, '')) || '<p class="sub">Nothing to preview yet.</p>'; mountZurivel($('edPreview')); } else autoGrow();
 }
 function startEdit(n, preset){
   const g = GROUPS.find(x => x.id === group);
