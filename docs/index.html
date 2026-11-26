@@ -975,13 +975,19 @@ function zDict(){
 }
 
 // ---------- Numbers ----------
-// The dictionary only lists 1 to 10 and 100 (rows of type num with the digits in English). Every number up to 999
-// is built from them by the Counting rules in the Zurivel Grammar note. A row for any other number (say 12) is used
-// instead of the built form.
+// The dictionary only lists 1 to 10, 100 and 1000 (rows of type num with the digits in English). Every other number
+// is built from them by the Counting rules in the Zurivel Grammar note, with no upper limit: big numbers count in
+// thousands, and a þus after a count multiplies it (dæþus = 2000, dædek þus = 20,000, þus þus = a million). A row for any other number
+// (say 12) is used instead of the built form, and a row for a power of 1000 (say 1000000) becomes a new counting word.
 const EN_N1 = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
 const EN_N10 = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+const EN_SCALE = [[1e15, 'quadrillion'], [1e12, 'trillion'], [1e9, 'billion'], [1e6, 'million'], [1e3, 'thousand']];
+const EN_SCALEW = new Map(EN_SCALE.map(([v, w]) => [w, v]));
 function enNumName(n){
-  const h = Math.floor(n / 100), r = n % 100, p = [];
+  if (n > Number.MAX_SAFE_INTEGER) return n.toLocaleString('en-US');
+  const p = [];
+  for (const [v, w] of EN_SCALE) if (n >= v){ p.push(enNumName(Math.floor(n / v)) + ' ' + w); n %= v; }
+  const h = Math.floor(n / 100), r = n % 100;
   if (h) p.push(EN_N1[h] + ' hundred');
   if (r) p.push(r < 20 ? EN_N1[r] : EN_N10[Math.floor(r / 10)] + (r % 10 ? '-' + EN_N1[r % 10] : ''));
   return p.join(' ');
@@ -1002,20 +1008,32 @@ function zNumBase(d){
   const v = new Map();
   for (const es of d.en.values()) for (const e of es) if (e.type === 'num') for (const s of e.senses) if (/^\d+$/.test(s) && !v.has(+s)) v.set(+s, e);
   d.nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100].every(n => v.has(n)) ? v : null;
-  d.numZ = new Map();   // Zurivel number word -> its value and place (H hundreds, T tens, X 10-19, U 1-9)
+  d.scales = [];        // counting words for powers of 1000 (þus), biggest first
+  d.numZ = new Map();   // Zurivel number word -> its value and place (S thousands and up, H hundreds, T tens, X 10-19, U 1-9)
   if (d.nums){
-    const add = (n, kind) => { for (const p of zNumWords(n, d)) if (p.n === n && !d.numZ.has(p.z.toLowerCase())) d.numZ.set(p.z.toLowerCase(), Object.assign({ kind }, p)); };
+    for (let s = 1000; s <= Number.MAX_SAFE_INTEGER; s *= 1000) if (v.has(s)) d.scales.unshift(s);
+    const add = (n, kind, more) => { for (const p of zNumWords(n, d)) if (p.n === n && !d.numZ.has(p.z.toLowerCase())) d.numZ.set(p.z.toLowerCase(), Object.assign({ kind }, more, p)); };
+    for (const s of d.scales){ add(s, 'S'); for (let u = 2; u <= 9; u++) add(u * s, 'Q', { q: u, s }); }   // Q: dæþus = 2 × þus
     for (let n = 1; n <= 9; n++){ add(n, 'U'); add(n * 100, 'H'); if (n > 1) add(n * 10, 'T'); }
     for (let n = 10; n <= 19; n++) add(n, 'X');
   }
   return d.nums;
 }
-// 1-999 as Zurivel words, each with its parts: 123 -> rak · dædek · tir.
+// Any whole number as Zurivel words, each with its parts: 123 -> rak · dædek · tir; 2500 -> dæþus · peltrak.
 function zNumWords(n, d){
-  const v = zNumBase(d); if (!v || !(n >= 1 && n <= 999) || n % 1) return null;
+  const v = zNumBase(d); if (!v || !(n >= 1 && n <= Number.MAX_SAFE_INTEGER) || n % 1) return null;
   const w = k => v.get(k).z, g = k => v.get(k).gloss;
   const one = k => ({ z: w(k), n: k, parts: [{ z: w(k), g: g(k) }] });
   const two = (a, b, k) => { const z = zJoin(w(a), w(b)); return { z, n: k, parts: [{ z: w(a), g: g(a) }].concat(z.length > w(a).length + w(b).length ? [{ z: 'a', g: 'link' }] : [], [{ z: w(b), g: g(b) }]) }; };
+  if (n >= 1000){
+    if (d.scales.includes(n)) return [one(n)];
+    const s = d.scales.find(x => x <= n); if (!s) return null;
+    const q = Math.floor(n / s), r = n % s;
+    // One thousand is just þus, 2-9 thousand is one word like the hundreds (dæþus), and a bigger count goes in
+    // front as its own words (dædek tir þus = 23,000). The þus multiplies everything before it.
+    const head = q === 1 ? [one(s)] : q <= 9 ? [v.has(q * s) ? one(q * s) : two(q, s, q * s)] : zNumWords(q, d).concat([one(s)]);
+    return head.concat(r ? zNumWords(r, d) : []);
+  }
   const out = [], h = Math.floor(n / 100), r = n % 100, t = Math.floor(r / 10), u = r % 10;
   if (h) out.push(v.has(h * 100) ? one(h * 100) : two(h, 100, h * 100));
   if (r > 10 && r < 20) out.push(v.has(r) ? one(r) : two(10, u, r));
@@ -1027,10 +1045,19 @@ function zNumEntry(d, n){
   const z = ws.map(x => x.z).join(' '), name = enNumName(n);
   return { z, zl: z.toLowerCase(), senses: [name], gloss: name, type: 'num', built: '', numWords: ws };
 }
-// An English number starting at toks[i]: "23", "twenty-three", "a hundred and five". Returns {n, len} or null.
-function enNumAt(toks, i){
+// Adds up a number read as counts and counting words. A counting word multiplies everything before it that is
+// not already bigger, so "dæ þus tir" is 2003 and "þus þus" is a million (English big numbers read the same way).
+function numStack(){
+  const st = []; let cur = 0;
+  return {
+    add(x){ cur += x; },
+    scale(s){ let gp = cur; cur = 0; while (st.length && st[st.length - 1][1] <= s) gp += st.pop()[0]; st.push([(gp || 1) * s, s]); },
+    total(){ return st.reduce((a, x) => a + x[0], 0) + cur; },
+  };
+}
+// 1-999 in English words starting at toks[i]: "twenty-three", "a hundred and five".
+function enSmallAt(toks, i){
   const w = j => toks[j] && !toks[j].p && !toks[j].multi ? toks[j].w : '';
-  if (/^\d+$/.test(w(i))) return { n: +w(i), len: 1 };
   let k = i, n = 0, any = false;
   const h = EN_N1.indexOf(w(k));
   if ((w(k) === 'a' || (h >= 1 && h <= 9)) && w(k + 1) === 'hundred'){ n = Math.max(h, 1) * 100; k += 2; any = true; }
@@ -1041,15 +1068,42 @@ function enNumAt(toks, i){
   else { const u = EN_N1.indexOf(w(k)); if (u >= 1){ n += u; k++; any = true; } }
   return any ? { n, len: k - i } : null;
 }
-// A Zurivel number starting at toks[i]: hundreds, then tens and a unit, or a 10-19 word, or a unit.
+// An English number starting at toks[i]: "23", "2,500", "two thousand and five", "a million". Returns {n, len} or null.
+function enNumAt(toks, i){
+  const w = j => toks[j] && !toks[j].p && !toks[j].multi ? toks[j].w : '';
+  if (/^\d+$/.test(w(i))) return { n: +w(i), len: 1 };
+  const acc = numStack(); let k = i, any = false, last = '';
+  for (;;){
+    if (last === 'S' && w(k) === 'and' && enSmallAt(toks, k + 1)) k++;
+    if (last !== 'G'){
+      if ((w(k) === 'a' || w(k) === 'one') && EN_SCALEW.has(w(k + 1))){ acc.add(1); k++; last = 'G'; any = true; continue; }
+      const m = enSmallAt(toks, k);
+      if (m){ acc.add(m.n); k += m.len; last = 'G'; any = true; continue; }
+    }
+    if (any && EN_SCALEW.has(w(k))){ acc.scale(EN_SCALEW.get(w(k))); k++; last = 'S'; continue; }
+    break;
+  }
+  return any ? { n: acc.total(), len: k - i } : null;
+}
+// A Zurivel number starting at toks[i]: counts of 1-999 (hundreds, then tens and a unit, or a 10-19 word, or a unit)
+// with counting words (þus) after them.
 function zNumRun(d, toks, i){
   if (!zNumBase(d)) return null;
   const get = j => toks[j] ? d.numZ.get(toks[j].toLowerCase()) : null;
-  let k = i, n = 0; const pieces = [];
-  const take = kinds => { const x = get(k); if (x && kinds.includes(x.kind)){ n += x.n; pieces.push(x); k++; return true; } return false; };
-  take('H');
-  if (take('T')) take('U'); else take('XU');
-  return pieces.length ? { n, len: k - i, pieces } : null;
+  const acc = numStack(); let k = i, last = ''; const pieces = [];
+  for (;;){
+    const x = get(k); if (!x) break;
+    if (x.kind === 'S'){ acc.scale(x.n); pieces.push(x); k++; last = 'S'; continue; }
+    if (last === 'G') break;
+    if (x.kind === 'Q'){ acc.add(x.q); acc.scale(x.s); pieces.push(x); k++; last = 'S'; continue; }
+    let n = 0, took = false;
+    const take = kinds => { const y = get(k); if (y && kinds.includes(y.kind)){ n += y.n; pieces.push(y); k++; took = true; return true; } return false; };
+    take('H');
+    if (take('T')) take('U'); else take('XU');
+    if (!took) break;
+    acc.add(n); last = 'G';
+  }
+  return pieces.length ? { n: acc.total(), len: k - i, pieces } : null;
 }
 
 // ---------- English -> Zurivel ----------
@@ -1105,7 +1159,8 @@ function enTokens(s){
   s = s.replace(/[’‘]/g, "'")
     .replace(/\bwon't\b/gi, 'will not').replace(/\bcan't\b/gi, 'can not').replace(/\bcannot\b/gi, 'can not').replace(/n't\b/gi, ' not')
     .replace(/'m\b/gi, ' am').replace(/'re\b/gi, ' are').replace(/'ll\b/gi, ' will').replace(/'ve\b/gi, ' have').replace(/'d\b/gi, ' would')
-    .replace(/\b(it|he|she|that|this|what|where|who|there|here|how|when|why)'s\b/gi, '$1 is');
+    .replace(/\b(it|he|she|that|this|what|where|who|there|here|how|when|why)'s\b/gi, '$1 is')
+    .replace(/(\d),(?=\d{3}\b)/g, '$1');
   return (s.match(/[A-Za-zÀ-ɏ]+(?:'s|s')?|\d+|[.!?,;:]/g) || []).map(t => {
     const poss = /'s$|s'$/.test(t), word = t.replace(/'s$/, '').replace(/'$/, '');
     return { t: word, w: word.toLowerCase(), poss, p: /^[.!?,;:]$/.test(t) };
