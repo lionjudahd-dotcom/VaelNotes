@@ -974,6 +974,84 @@ function zDict(){
   return d;
 }
 
+// ---------- Numbers ----------
+// The dictionary only lists 1 to 10 and 100 (rows of type num with the digits in English). Every number up to 999
+// is built from them by the Counting rules in the Zurivel Grammar note. A row for any other number (say 12) is used
+// instead of the built form.
+const EN_N1 = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+const EN_N10 = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+function enNumName(n){
+  const h = Math.floor(n / 100), r = n % 100, p = [];
+  if (h) p.push(EN_N1[h] + ' hundred');
+  if (r) p.push(r < 20 ? EN_N1[r] : EN_N10[Math.floor(r / 10)] + (r % 10 ? '-' + EN_N1[r % 10] : ''));
+  return p.join(' ');
+}
+// Two parts joined with a linking -a- when the join would repeat a consonant or break the consonant rules
+// (dek + kuna = dekakuna, pelt + dek = peltadek, but dek + tir = dektir).
+const zCons = c => !Z_VOW.includes(c);
+function zJoin(a, b){
+  const la = a.toLowerCase(), lb = b.toLowerCase();
+  let i = la.length; while (i > 0 && zCons(la[i - 1])) i--;
+  let j = 0; while (j < lb.length && zCons(lb[j])) j++;
+  const run = la.slice(i) + lb.slice(0, j);
+  const bad = (j > 0 && la.slice(-1) === lb[0]) || run.length > 3 || (run.length === 3 && !Z_ONSET.has(run.slice(-2)));
+  return bad ? a + 'a' + b : a + b;
+}
+function zNumBase(d){
+  if ('nums' in d) return d.nums;
+  const v = new Map();
+  for (const es of d.en.values()) for (const e of es) if (e.type === 'num') for (const s of e.senses) if (/^\d+$/.test(s) && !v.has(+s)) v.set(+s, e);
+  d.nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100].every(n => v.has(n)) ? v : null;
+  d.numZ = new Map();   // Zurivel number word -> its value and place (H hundreds, T tens, X 10-19, U 1-9)
+  if (d.nums){
+    const add = (n, kind) => { for (const p of zNumWords(n, d)) if (p.n === n && !d.numZ.has(p.z.toLowerCase())) d.numZ.set(p.z.toLowerCase(), Object.assign({ kind }, p)); };
+    for (let n = 1; n <= 9; n++){ add(n, 'U'); add(n * 100, 'H'); if (n > 1) add(n * 10, 'T'); }
+    for (let n = 10; n <= 19; n++) add(n, 'X');
+  }
+  return d.nums;
+}
+// 1-999 as Zurivel words, each with its parts: 123 -> rak · dædek · tir.
+function zNumWords(n, d){
+  const v = zNumBase(d); if (!v || !(n >= 1 && n <= 999) || n % 1) return null;
+  const w = k => v.get(k).z, g = k => v.get(k).gloss;
+  const one = k => ({ z: w(k), n: k, parts: [{ z: w(k), g: g(k) }] });
+  const two = (a, b, k) => { const z = zJoin(w(a), w(b)); return { z, n: k, parts: [{ z: w(a), g: g(a) }].concat(z.length > w(a).length + w(b).length ? [{ z: 'a', g: 'link' }] : [], [{ z: w(b), g: g(b) }]) }; };
+  const out = [], h = Math.floor(n / 100), r = n % 100, t = Math.floor(r / 10), u = r % 10;
+  if (h) out.push(v.has(h * 100) ? one(h * 100) : two(h, 100, h * 100));
+  if (r > 10 && r < 20) out.push(v.has(r) ? one(r) : two(10, u, r));
+  else { if (t) out.push(v.has(t * 10) ? one(t * 10) : two(t, 10, t * 10)); if (u) out.push(one(u)); }
+  return out;
+}
+function zNumEntry(d, n){
+  const ws = zNumWords(n, d); if (!ws) return null;
+  const z = ws.map(x => x.z).join(' '), name = enNumName(n);
+  return { z, zl: z.toLowerCase(), senses: [name], gloss: name, type: 'num', built: '', numWords: ws };
+}
+// An English number starting at toks[i]: "23", "twenty-three", "a hundred and five". Returns {n, len} or null.
+function enNumAt(toks, i){
+  const w = j => toks[j] && !toks[j].p && !toks[j].multi ? toks[j].w : '';
+  if (/^\d+$/.test(w(i))) return { n: +w(i), len: 1 };
+  let k = i, n = 0, any = false;
+  const h = EN_N1.indexOf(w(k));
+  if ((w(k) === 'a' || (h >= 1 && h <= 9)) && w(k + 1) === 'hundred'){ n = Math.max(h, 1) * 100; k += 2; any = true; }
+  else if (w(k) === 'hundred'){ n = 100; k++; any = true; }
+  if (any && w(k) === 'and' && (EN_N1.indexOf(w(k + 1)) > 0 || EN_N10.indexOf(w(k + 1)) > 1)) k++;
+  const t = EN_N10.indexOf(w(k));
+  if (t > 1){ n += t * 10; k++; any = true; const u = EN_N1.indexOf(w(k)); if (u >= 1 && u <= 9){ n += u; k++; } }
+  else { const u = EN_N1.indexOf(w(k)); if (u >= 1){ n += u; k++; any = true; } }
+  return any ? { n, len: k - i } : null;
+}
+// A Zurivel number starting at toks[i]: hundreds, then tens and a unit, or a 10-19 word, or a unit.
+function zNumRun(d, toks, i){
+  if (!zNumBase(d)) return null;
+  const get = j => toks[j] ? d.numZ.get(toks[j].toLowerCase()) : null;
+  let k = i, n = 0; const pieces = [];
+  const take = kinds => { const x = get(k); if (x && kinds.includes(x.kind)){ n += x.n; pieces.push(x); k++; return true; } return false; };
+  take('H');
+  if (take('T')) take('U'); else take('XU');
+  return pieces.length ? { n, len: k - i, pieces } : null;
+}
+
 // ---------- English -> Zurivel ----------
 const EN_IRR = { went: 'go', gone: 'go', saw: 'see', seen: 'see', took: 'take', taken: 'take', came: 'come', ate: 'eat', eaten: 'eat', drank: 'drink', drunk: 'drink', said: 'say', knew: 'know', known: 'know', gave: 'give', given: 'give', fought: 'fight', heard: 'hear', made: 'make', did: 'do', done: 'do', had: 'have', found: 'find', lost: 'lose', bought: 'buy', sold: 'sell', thought: 'think', told: 'tell', left: 'leave', held: 'hold', ran: 'run', fell: 'fall', fallen: 'fall', stood: 'stand', sat: 'sit', slept: 'sleep', flew: 'fly', flown: 'fly', swam: 'swim', sang: 'sing', sung: 'sing', wrote: 'write', written: 'write', broke: 'break', broken: 'break', built: 'build', brought: 'bring', taught: 'teach', hid: 'hide', hidden: 'hide', led: 'lead', felt: 'feel', kept: 'keep', paid: 'pay', spoke: 'speak', spoken: 'speak', woke: 'wake', grew: 'grow', stole: 'steal', stolen: 'steal', wept: 'weep', sought: 'seek', learnt: 'learn', burnt: 'burn', fled: 'flee', struck: 'hit', bore: 'bear', meant: 'mean', became: 'become', began: 'begin', got: 'get' };
 const EN_PAST = {}; for (const [p, b] of Object.entries(EN_IRR)) if (!EN_PAST[b]) EN_PAST[b] = p;
@@ -1000,6 +1078,7 @@ function enForms(w){
 }
 const FEAT_OK = { plural: ['noun'], s3: ['verb'], past: ['verb'], ing: ['verb'], comp: ['adj'] };
 function enReadings(d, w){
+  if (w[0] === '#'){ const e = zNumEntry(d, +w.slice(1)); return e ? [{ e, f: {}, lemma: w }] : []; }   // a number read by enNumAt
   const out = [];
   for (const [lemma, f] of enForms(w)){
     const es = d.en.get(lemma); if (!es) continue;
@@ -1057,7 +1136,17 @@ function enToZurivel(text){
       }
       if (hit){ g.push(hit); i += hit.multi; } else { g.push(toks[i]); i++; }
     }
-    toks = g;
+    // Numbers: "23", "twenty-three" and "a hundred and five" become one token that is built from the number words.
+    // A single word the dictionary already has (one, ten, hundred) is left alone.
+    toks = [];
+    for (let i = 0; i < g.length;){
+      const m = enNumAt(g, i);
+      if (m && zNumWords(m.n, d) && !(m.len === 1 && d.en.has(g[i].w))){
+        const span = g.slice(i, i + m.len);
+        toks.push({ t: span.map(x => x.t).join(' '), w: '#' + m.n, poss: span[m.len - 1].poss });
+        i += m.len;
+      } else { toks.push(g[i]); i++; }
+    }
     // A question that starts with can/must/should (after an optional question word): put it after the subject.
     const qi = toks.length && d.en.get(toks[0].w) && d.en.get(toks[0].w).some(e => e.type === 'question') ? 1 : 0;
     if (q && toks[qi] && EN_MODAL.has(toks[qi].w) && toks[qi + 1]){
@@ -1207,7 +1296,8 @@ function enToZurivel(text){
         continue;
       }
       for (const p of u.poss) push(p.e.z, [{ z: p.e.z, g: p.e.gloss }], p.e.gloss);
-      if (u.num) push(u.num.e.z, [{ z: u.num.e.z, g: u.num.e.gloss }], u.num.e.gloss);
+      if (u.num && u.num.e.numWords) for (const p of u.num.e.numWords) push(p.z, p.parts, u.num.e.gloss);
+      else if (u.num) push(u.num.e.z, [{ z: u.num.e.z, g: u.num.e.gloss }], u.num.e.gloss);
       for (const p of u.pre) push(p.e.z, [{ z: p.e.z, g: p.e.gloss }], p.e.gloss);
       if (u.noun){
         let z = u.noun.name || u.noun.e.z; const parts = [{ z, g: u.noun.name ? 'name' : u.noun.e.gloss }];
@@ -1265,9 +1355,12 @@ function zurivelToEnglish(text){
   const toks = zType(text).match(/[^\s.,!?;:]+|[.,!?;:]/g) || [];
   // Glosses word by word; "nu" after a verb moves in front of it, the English way ("will not go").
   const seg = [];
-  for (const t of toks){
+  for (let ti = 0; ti < toks.length; ti++){
+    const t = toks[ti];
     if (/^[.,!?;:]$/.test(t)){ seg.push({ p: t }); continue; }
     const lw = t.toLowerCase();
+    const num = zNumRun(d, toks, ti);   // dædek tir -> twenty-three
+    if (num){ seg.push({ g: enNumName(num.n) }); for (const p of num.pieces) res.rows.push({ z: p.z, parts: p.parts, src: String(p.n) }); ti += num.len - 1; continue; }
     if (lw === 'ka'){ res.rows.push({ z: t, parts: [{ z: 'ka', g: 'question' }], src: '?' }); continue; }
     if (lw === 'nu'){
       res.rows.push({ z: t, parts: [{ z: 'nu', g: 'not' }], src: 'not' });
