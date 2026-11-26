@@ -57,27 +57,67 @@ function setNotes(raw){
 // Show our own write straight away, without waiting for the store to echo it.
 function applyLocal(doc){ const i = rawNotes.findIndex(n => n.id === doc.id); const next = rawNotes.slice(); if (i >= 0) next[i] = { ...rawNotes[i], ...doc }; else next.push(doc); setNotes(next); }
 function refreshLists(){
-  noteTabs(); drawNoteList();
+  noteTabs(); drawNoteList(); drawNoteStrip();
   const n = liveNotes().length;
   $('notesStamp').textContent = !notesLoaded ? '' : notesReadOnly ? `${n} notes. You can read these notes but not change them.` : `${n} notes. Changes save for everyone who can open this page.`;
-  applyGroupView();
+  $('newNoteBtn').hidden = !notesLoaded || notesReadOnly || !notesCol;
+  graphChanged();
 }
+
+// ---------- links to NPCs ----------
+// [[Name]] links an NPC by name. An NPC without a name is linked by its job, [[Innkeeper]], and when several NPCs
+// share a name or a job the place goes in brackets: [[Guard (Port Town)]]. A note with the same title always wins.
+// The roster code keeps this index up to date (setNpcIndex).
+const NPCX = { list: [], byKey: new Map(), byId: new Map(), label: new Map(), out: new Map() };
+const npcName = r => String(r.name || '').trim(), npcRole = r => String(r.role || '').trim(), npcPlace = r => String(r.place || '').trim();
+const NPC_LINK_SKIP = new Set(['name', 'role', 'place', 'home', 'job', 'faction', 'race', 'age', 'gender', 'tier', 'status', 'src', 'createdAt', 'updatedAt']);
+// All the free text on an NPC sheet, where [[links]] can be written.
+const npcText = r => Object.entries(r).filter(([k, v]) => typeof v === 'string' && !NPC_LINK_SKIP.has(k)).map(([, v]) => v).join('\n');
+function npcIndex(list){
+  const names = new Map(), roles = new Map(), bump = (m, k) => { if (k) m.set(k.toLowerCase(), (m.get(k.toLowerCase()) || 0) + 1); };
+  for (const r of list){ bump(names, npcName(r)); bump(roles, npcRole(r)); }
+  const byKey = new Map(), label = new Map(), put = (k, r) => { k = k.toLowerCase(); if (k && !byKey.has(k)) byKey.set(k, r); };
+  for (const r of list){
+    const nm = npcName(r), ro = npcRole(r), pl = npcPlace(r);
+    if (nm && names.get(nm.toLowerCase()) === 1 && !roles.has(nm.toLowerCase())){ put(nm, r); label.set(r.id, nm); }
+    if (ro && roles.get(ro.toLowerCase()) === 1 && !names.has(ro.toLowerCase())){ put(ro, r); if (!label.has(r.id)) label.set(r.id, ro); }
+    if (pl){ if (nm){ put(`${nm} (${pl})`, r); if (!label.has(r.id)) label.set(r.id, `${nm} (${pl})`); } if (ro){ put(`${ro} (${pl})`, r); if (!label.has(r.id)) label.set(r.id, `${ro} (${pl})`); } }
+    if (!label.has(r.id)) label.set(r.id, nm || ro);
+  }
+  return { byKey, label };
+}
+function setNpcIndex(list){
+  const { byKey, label } = npcIndex(list);
+  NPCX.list = list; NPCX.byKey = byKey; NPCX.label = label; NPCX.byId = new Map(list.map(r => [r.id, r]));
+  NPCX.out = new Map(list.map(r => [r.id, [...new Set(linksIn(npcText(r)).map(s => s.toLowerCase()))]]));
+}
+const npcLinkName = r => NPCX.label.get(r.id) || npcName(r) || npcRole(r) || 'Unnamed NPC';
+// Shown on chips, tabs and the graph: the name, or for an unnamed NPC the link name ("Guard (Port Town)" when there are several).
+const npcShown = r => npcName(r) || npcLinkName(r);
+// What a [[link]] points at: { note } or { npc }, or null when nothing has that name yet.
+function resolveLink(t){
+  const k = String(t).trim().toLowerCase(), n = byTitle.get(k);
+  if (n) return { note: n };
+  const r = NPCX.byKey.get(k);
+  return r ? { npc: r } : null;
+}
+// The link names that point at an NPC (its name, its job, "job (place)").
+const npcKeysOf = id => [...NPCX.byKey.entries()].filter(([, r]) => r.id === id).map(([k]) => k);
 
 // ---------- list ----------
 function noteTabs(){
   const live = liveNotes(), trash = NOTES.length - live.length;
-  if (group === 'trash' && !trash) group = 'canon';
+  if ((group === 'trash' && !trash) || group === 'graph') group = 'canon';
   const btn = (id, name, n) => `<button type="button" role="tab" data-g="${id}" aria-selected="${id === group}">${name}${n === '' ? '' : `<span class="n">${n}</span>`}</button>`;
-  $('noteTabs').innerHTML = btn('recent', 'Recent', '') + btn('graph', 'Graph', '') + GROUPS.map(g => btn(g.id, g.name, live.filter(n => groupOf(n) === g).length)).join('') + (trash ? btn('trash', 'Trash', trash) : '');
+  $('noteTabs').innerHTML = btn('recent', 'Recent', '') + GROUPS.map(g => btn(g.id, g.name, live.filter(n => groupOf(n) === g).length)).join('') + (trash ? btn('trash', 'Trash', trash) : '');
 }
-$('noteTabs').addEventListener('click', e => { const b = e.target.closest('button[data-g]'); if (!b) return; group = b.dataset.g; store.set('vael.noteGroup', group); $('noteSearch').value = ''; noteTabs(); drawNoteList(); applyGroupView(); $('notesPane').scrollTop = 0; });
+$('noteTabs').addEventListener('click', e => { const b = e.target.closest('button[data-g]'); if (!b) return; group = b.dataset.g; store.set('vael.noteGroup', group); $('noteSearch').value = ''; noteTabs(); drawNoteList(); $('notesPane').scrollTop = 0; });
 
 function rowFor(n, snippet){
   const st = n.status;
   return `<button type="button" class="row" data-nid="${esc(n.id)}"><span class="t">${esc(n.title)}</span><span class="r">${st.label ? `<span class="pill ${st.cls}">${esc(st.label)}</span>` : ''}<span class="chev" aria-hidden="true">›</span></span><span class="s">${snippet ?? esc(n.summary)}</span></button>`;
 }
 function drawNoteList(){
-  if (group === 'graph') return;
   const empty = t => `<div class="row"><span class="t muted">${t}</span></div>`;
   if (!notesLoaded){ $('noteList').innerHTML = empty('Loading notes…'); return; }
   const q = $('noteSearch').value.trim().toLowerCase(), live = liveNotes();
@@ -132,7 +172,10 @@ if (window.marked) window.marked.use({ renderer: {
     href = String(href || '');
     if (href.startsWith('#wl:')){
       let name = ''; try { name = decodeURIComponent(href.slice(4)); } catch {}
-      return byTitle.has(name.toLowerCase()) ? `<a class="wl" data-wl="${esc(name)}" href="#notes">${text}</a>` : `<a class="wl wl-missing" data-wl="${esc(name)}" href="#notes" title="No note with this name yet">${text}</a>`;
+      const o = resolveLink(name);
+      return o && o.note ? `<a class="wl" data-wl="${esc(name)}" href="#notes">${text}</a>`
+        : o && o.npc ? `<a class="wl npc" data-npc="${esc(o.npc.id)}" href="#npcs" title="NPC: ${esc(npcShown(o.npc))}">${text}</a>`
+        : `<a class="wl wl-missing" data-wl="${esc(name)}" href="#notes" title="No note or NPC with this name yet">${text}</a>`;
     }
     return /^(https?:|mailto:)/i.test(href) ? `<a href="${esc(href)}" target="_blank" rel="noopener">${text}</a>` : text;
   }
@@ -768,14 +811,27 @@ function connHtml(n){
   const seen = new Set(), outs = [];
   for (const t of linksIn(n.body)){ const k = t.toLowerCase(); if (!seen.has(k) && k !== n.title.toLowerCase()){ seen.add(k); outs.push(t); } }
   const key = n.title.toLowerCase(), back = liveNotes().filter(o => o.id !== n.id && o.out.includes(key)).sort((a, b) => a.title.localeCompare(b.title));
-  const chips = outs.map(t => { const o = byTitle.get(t.toLowerCase()); return `<button type="button" class="chipbtn${o ? '' : ' missing'}" data-wl="${esc(o ? o.title : t)}">${esc(o ? o.title : t)}</button>`; }).join('');
+  const npcBack = NPCX.list.filter(r => (NPCX.out.get(r.id) || []).includes(key)).sort((a, b) => npcShown(a).localeCompare(npcShown(b)));
+  const chips = outs.map(linkChip).join('');
   const rows = back.map(o => { const i = o.plain.toLowerCase().indexOf(key); const snip = i >= 0 ? (i > 60 ? '…' : '') + o.plain.slice(Math.max(0, i - 60), i + key.length + 80) + '…' : o.summary; return rowFor(o, esc(snip)); }).join('');
-  if (!chips && !rows) return `<section class="conn"><p class="label">Connections</p><p class="sub">Nothing links here yet, and this note links nowhere. ${notesReadOnly || n.trashed ? '' : 'Edit it and type [[ to connect it.'}</p></section>`;
-  return `<section class="conn">${chips ? `<p class="label">Links to</p><div class="chips">${chips}</div>` : ''}${rows ? `<p class="label">Linked from · ${back.length}</p><div class="list">${rows}</div>` : ''}</section>`;
+  const npcRows = npcBack.map(npcRow).join('');
+  if (!chips && !rows && !npcRows) return `<section class="conn"><p class="label">Connections</p><p class="sub">Nothing links here yet, and this note links nowhere. ${notesReadOnly || n.trashed ? '' : 'Edit it and tap Link to connect it to a note or an NPC.'}</p></section>`;
+  return `<section class="conn">${chips ? `<p class="label">Links to</p><div class="chips">${chips}</div>` : ''}${rows ? `<p class="label">Linked from · ${back.length}</p><div class="list">${rows}</div>` : ''}${npcRows ? `<p class="label">Mentioned on NPC sheets · ${npcBack.length}</p><div class="list">${npcRows}</div>` : ''}</section>`;
+}
+// A chip for one [[link]]: a note, an NPC, or a dashed "not written yet".
+function linkChip(t){
+  const o = resolveLink(t);
+  if (o && o.note) return `<button type="button" class="chipbtn" data-wl="${esc(o.note.title)}">${esc(o.note.title)}</button>`;
+  if (o && o.npc) return `<button type="button" class="chipbtn npc" data-npc="${esc(o.npc.id)}" title="NPC sheet"><i aria-hidden="true"></i>${esc(npcShown(o.npc))}</button>`;
+  return `<button type="button" class="chipbtn missing" data-wl="${esc(t)}" title="Nothing has this name yet">${esc(t)}</button>`;
+}
+function npcRow(r){
+  return `<button type="button" class="row" data-npc="${esc(r.id)}"><span class="t">${esc(npcShown(r))}${npcName(r) && npcRole(r) ? ` <span class="muted" style="font-weight:500">· ${esc(npcRole(r))}</span>` : ''}</span><span class="r"><span class="pill ${esc(r.tier)}">NPC</span></span><span class="s">${esc([npcPlace(r), r.job, r.note].filter(Boolean).join(' · '))}</span></button>`;
 }
 function showNote(n, keepScroll){
   const pane = $('readerPane'), top = pane.scrollTop;
   current = n.id; shownSig = sigOf(n);
+  addNoteTab(n.id);
   $('reader').hidden = false; $('editor').hidden = true; $('readerBody').hidden = false;
   $('saveNoteBtn').hidden = true; $('editBtn').hidden = notesReadOnly || n.trashed || !notesCol;
   $('backLbl').textContent = 'Back';
@@ -802,6 +858,7 @@ function showNote(n, keepScroll){
   $('readerCrumb').textContent = prev ? 'Back to ' + prev.title : 'Back to the list';
   pane.scrollTop = keepScroll ? top : 0;
   setHash('n-' + n.id);
+  drawNoteStrip();
 }
 function openNote(id, push){
   const n = byId.get(id); if (!n || nEdit) return false;
@@ -809,34 +866,116 @@ function openNote(id, push){
   showNote(n); return true;
 }
 function openFromHash(id){ if (!notesLoaded){ pendingOpen = id; return; } if (nEdit || id === current || !byId.get(id)) return; stack = []; openNote(id, true); }
-function closeReader(){ $('reader').hidden = true; current = null; stack = []; setNoteMsg(''); setHash('notes'); }
+function closeReader(){ $('reader').hidden = true; current = null; stack = []; setNoteMsg(''); setHash('notes'); drawNoteStrip(); }
 function goBack(){
   stack.pop();
   while (stack.length && !byId.get(stack[stack.length - 1])) stack.pop();
   if (stack.length) showNote(byId.get(stack[stack.length - 1])); else closeReader();
 }
 function followLink(title){
-  const o = byTitle.get(String(title).toLowerCase());
-  if (o){ openNote(o.id, true); return; }
-  if (notesReadOnly || !notesCol){ setNoteMsg(`There is no note called “${title}” yet.`, ''); return; }
+  const o = resolveLink(title);
+  if (o && o.npc){ openNpcTab(o.npc.id); return; }
+  if (o){ if (!parkNoteEdit()) return; openNote(o.note.id, true); return; }
+  if (notesReadOnly || !notesCol){ setNoteMsg(`There is no note or NPC called “${title}” yet.`, ''); return; }
+  if (!parkNoteEdit()) return;
   const from = byId.get(current);
   startEdit(null, { title, folder: from ? from.folder : '' });
   setNoteMsg(`“${title}” doesn't exist yet. Write it and tap Save to create it.`, '');
 }
 $('readerBody').addEventListener('click', e => {
+  const p = e.target.closest('[data-npc]'); if (p){ e.preventDefault(); openNpcTab(p.dataset.npc); return; }
   const a = e.target.closest('[data-wl]'); if (a){ e.preventDefault(); followLink(a.dataset.wl); return; }
-  const gb = e.target.closest('[data-graph]'); if (gb){ showInGraph(gb.dataset.graph); return; }
+  const gb = e.target.closest('[data-graph]'); if (gb){ const gn = byId.get(gb.dataset.graph); if (gn) showInGraph('n:' + gn.title.toLowerCase()); return; }
   const r = e.target.closest('[data-nid]'); if (r){ openNote(r.dataset.nid, true); return; }
   if (e.target.closest('#restoreBtn')) restoreNote();
   else if (e.target.closest('#purgeBtn')) purgeNote(e.target.closest('#purgeBtn'));
 });
 $('edPreview').addEventListener('click', e => { if (e.target.closest('a.wl')) e.preventDefault(); });
 
+// ---------- open-note tabs ----------
+// Every note you open gets a tab along the top, so you can flip between notes. A note you were editing keeps
+// its unsaved text as a draft on this device and opens straight back into editing (the tab shows a dot).
+const NEW_TAB = '__new', TAB_MAX = 12;
+const readList = k => { try { const a = JSON.parse(store.get(k) || '[]'); return Array.isArray(a) ? a.filter(x => typeof x === 'string') : []; } catch { return []; } };
+let oTabs = readList('vael.noteTabs'), edTabs = new Set(readList('vael.noteEdTabs')), tabCloseArmed = '';
+const saveTabs = () => { store.set('vael.noteTabs', JSON.stringify(oTabs)); store.set('vael.noteEdTabs', JSON.stringify([...edTabs])); };
+const activeNoteTab = () => nEdit ? (nEdit.id || NEW_TAB) : !$('reader').hidden ? current : null;
+function addNoteTab(id){
+  if (!oTabs.includes(id)){
+    const at = oTabs.indexOf(activeNoteTab());
+    oTabs.splice(at >= 0 ? at + 1 : oTabs.length, 0, id);
+    while (oTabs.length > TAB_MAX){ const old = oTabs.find(x => x !== id && !edTabs.has(x)); if (!old) break; oTabs.splice(oTabs.indexOf(old), 1); }
+    saveTabs();
+  }
+}
+function dropNoteTab(id){ const i = oTabs.indexOf(id); if (i >= 0) oTabs.splice(i, 1); edTabs.delete(id); saveTabs(); return i; }
+function tabTitle(id){
+  if (id === NEW_TAB){ if (nEdit && !nEdit.id) return $('edTitle').value.trim() || 'New note'; try { return (JSON.parse(store.get('vael.draft.new') || '{}').t || '').trim() || 'New note'; } catch { return 'New note'; } }
+  const n = byId.get(id); return n ? n.title : '';
+}
+function drawNoteStrip(){
+  if (notesLoaded) oTabs = oTabs.filter(id => id === NEW_TAB || (byId.has(id) && !byId.get(id).trashed) || id === current);
+  const act = activeNoteTab(), strip = $('noteStrip');
+  strip.hidden = !oTabs.length;
+  if (!oTabs.length){ strip.innerHTML = ''; return; }
+  strip.innerHTML = `<button type="button" class="ot home" data-ot="" aria-current="${!act}" title="All notes"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>All notes</span></button>`
+    + oTabs.map(id => {
+      const t = tabTitle(id), dot = edTabs.has(id) || (id === act && noteDirty()), armed = tabCloseArmed === id;
+      return `<span class="ot${id === act ? ' on' : ''}"><button type="button" class="otl" data-ot="${esc(id)}" aria-current="${id === act}" title="${esc(t)}">${dot ? '<i class="dot" title="Unsaved changes"></i>' : ''}<span>${esc(t)}</span></button><button type="button" class="otx${armed ? ' armed' : ''}" data-otx="${esc(id)}" aria-label="Close ${esc(t)}">${armed ? 'Discard?' : '×'}</button></span>`;
+    }).join('');
+  const on = strip.querySelector('.ot.on'); if (on) on.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+// Leave the note being edited without losing anything: its text stays as a draft and the tab remembers it.
+function parkNoteEdit(){
+  if (!nEdit) return true;
+  const key = nEdit.id || NEW_TAB;
+  if (noteDirty()){ store.set(draftKey(), edSnap()); edTabs.add(key); }
+  else { store.set(draftKey(), ''); edTabs.delete(key); if (key === NEW_TAB) dropNoteTab(NEW_TAB); }
+  saveTabs(); stopEdit(); return true;
+}
+function activateNoteTab(id){
+  tabCloseArmed = '';
+  if (id === activeNoteTab()){ drawNoteStrip(); return; }
+  parkNoteEdit();
+  if (!id){ closeReader(); return; }
+  if (id === NEW_TAB){ if (notesReadOnly || !notesCol){ dropNoteTab(NEW_TAB); drawNoteStrip(); return; } current = null; startEdit(null, null); return; }
+  const n = byId.get(id); if (!n) return;
+  stack = stack.filter(x => x !== id); stack.push(id);
+  if (edTabs.has(id) && !n.trashed && !notesReadOnly && notesCol){ current = id; startEdit(n); } else showNote(n);
+}
+function closeNoteTab(id){
+  const act = activeNoteTab(), unsaved = edTabs.has(id) || (id === act && noteDirty());
+  if (unsaved && tabCloseArmed !== id){ tabCloseArmed = id; drawNoteStrip(); setNoteMsg('This tab has unsaved changes. Tap Discard? to close it and drop them.', 'err'); return; }
+  tabCloseArmed = '';
+  if (id === act && nEdit){ store.set(draftKey(), ''); stopEdit(); }
+  else if (edTabs.has(id)) store.set('vael.draft.' + (id === NEW_TAB ? 'new' : id), '');
+  const i = dropNoteTab(id); stack = stack.filter(x => x !== id);
+  if (id === act){ const next = oTabs[Math.min(i, oTabs.length - 1)]; if (next) activateNoteTab(next); else closeReader(); }
+  else drawNoteStrip();
+  setNoteMsg('');
+}
+$('noteStrip').addEventListener('click', e => {
+  const x = e.target.closest('[data-otx]'); if (x){ closeNoteTab(x.dataset.otx); return; }
+  const b = e.target.closest('[data-ot]'); if (b) activateNoteTab(b.dataset.ot);
+});
+// Middle-click a tab to close it, the way browsers do.
+$('noteStrip').addEventListener('auxclick', e => { const b = e.target.closest('[data-ot]'); if (e.button === 1 && b && b.dataset.ot){ e.preventDefault(); closeNoteTab(b.dataset.ot); } });
+
 // ---------- editing ----------
 const ta = $('edBody');
-let nEdit = null, nBase = '', nSaving = false, nBackArmed = false, nTrashArmed = false, nPreview = false, draftTimer = 0, lastCtx = null, suggFirst = '', histCache = [];
+let nEdit = null, nBase = '', nSaving = false, nBackArmed = false, nTrashArmed = false, nPreview = false, draftTimer = 0, histCache = [];
 function setNoteMsg(text, kind){ const m = $('noteMsg'); m.textContent = text; m.className = 'smsg' + (kind ? ' ' + kind : ''); }
-const edSnap = () => JSON.stringify({ t: $('edTitle').value.trim(), f: $('edFolder').value, b: ta.value });
+// The Status line ("Status: Draft") is picked from a box instead of typed, and put back on top when saving.
+const STATUSES = ['Draft', 'Canon', 'Future scope', 'Archived'];
+function splitStatus(body){ const m = /^Status:[ \t]*(.*)(\r?\n|$)/.exec(body); return m ? { st: m[1].trim(), text: body.slice(m[0].length).replace(/^(\r?\n)+/, '') } : { st: '', text: body }; }
+function fillStatus(st){
+  const opts = STATUSES.slice(); if (st && !opts.includes(st)) opts.unshift(st);
+  $('edStatus').innerHTML = opts.map(o => `<option value="${esc(o)}">${esc(o.length > 44 ? o.slice(0, 42) + '…' : o)}</option>`).join('') + '<option value="">No status</option>';
+  $('edStatus').value = st;
+}
+const edBody = () => { const st = $('edStatus').value; return st ? `Status: ${st}\n\n${ta.value}` : ta.value; };
+function setEdBody(body){ const { st, text } = splitStatus(String(body || '')); fillStatus(st); ta.value = text; }
+const edSnap = () => JSON.stringify({ t: $('edTitle').value.trim(), f: $('edFolder').value, b: edBody() });
 const noteDirty = () => !!nEdit && edSnap() !== nBase;
 const draftKey = () => 'vael.draft.' + (nEdit && nEdit.id ? nEdit.id : 'new');
 function resetNoteArms(){ nBackArmed = false; nTrashArmed = false; $('backLbl').textContent = nEdit ? 'Cancel' : 'Back'; $('trashBtn').textContent = 'Move to trash'; $('trashBtn').classList.remove('armed'); }
@@ -848,21 +987,22 @@ function fillFolders(value){
   $('edFolder').value = value || list[0];
 }
 function setPreview(on){
-  nPreview = on; $('prevBtn').setAttribute('aria-pressed', String(on)); $('prevBtn').textContent = on ? 'Write' : 'Preview';
+  nPreview = on; $('prevBtn').setAttribute('aria-pressed', String(on)); $('writeBtn').setAttribute('aria-pressed', String(!on));
   $('edBodyWrap').hidden = on; $('edPreview').hidden = !on; $('sugg').hidden = true;
-  for (const b of document.querySelectorAll('.edtools [data-fmt]')) b.disabled = on;
-  if (on){ $('edPreview').innerHTML = renderMd(ta.value.replace(/^Status:.*\n?/m, '')) || '<p class="sub">Nothing to preview yet.</p>'; mountZurivel($('edPreview')); } else autoGrow();
+  for (const b of document.querySelectorAll('.edtools [data-fmt], #edStyle')) b.disabled = on;
+  if (on){ $('edPreview').innerHTML = renderMd(ta.value) || '<p class="sub">Nothing to preview yet.</p>'; mountZurivel($('edPreview')); } else { autoGrow(); edState(); }
 }
 function startEdit(n, preset){
   const g = GROUPS.find(x => x.id === group);
   nEdit = { id: n ? n.id : null, base: n ? n.updatedAt : '', createdAt: n ? n.createdAt : '' };
   $('edTitle').value = n ? n.title : (preset && preset.title) || '';
   fillFolders(n ? n.folder : (preset && preset.folder) || (g ? g.folders[0] : 'Story & Lore'));
-  ta.value = n ? n.body : NEW_BODY;
+  setEdBody(n ? n.body : NEW_BODY);
   nBase = edSnap();
   setNoteMsg('');
   const saved = store.get(draftKey());
-  if (saved) try { const d = JSON.parse(saved); if (d && typeof d.b === 'string' && JSON.stringify({ t: d.t, f: d.f, b: d.b }) !== nBase){ $('edTitle').value = d.t || ''; if (d.f) fillFolders(d.f); ta.value = d.b; setNoteMsg('Restored your unsaved draft from this device. Tap Cancel to drop it.', ''); } } catch {}
+  if (saved) try { const d = JSON.parse(saved); if (d && typeof d.b === 'string' && JSON.stringify({ t: d.t, f: d.f, b: d.b }) !== nBase){ $('edTitle').value = d.t || ''; if (d.f) fillFolders(d.f); setEdBody(d.b); setNoteMsg('Your unsaved changes from this device are back. Tap Save to keep them, or Cancel to drop them.', ''); } } catch {}
+  addNoteTab(n ? n.id : NEW_TAB);
   $('reader').hidden = false; $('readerBody').hidden = true; $('editor').hidden = false;
   $('editBtn').hidden = true; $('saveNoteBtn').hidden = false; $('saveNoteBtn').disabled = false;
   $('readerCrumb').textContent = n ? 'Editing' : 'New note';
@@ -870,94 +1010,200 @@ function startEdit(n, preset){
   resetNoteArms(); setPreview(false);
   $('readerPane').scrollTop = 0;
   if (!n && !$('edTitle').value) $('edTitle').focus();
+  drawNoteStrip();
 }
-function stopEdit(){ nEdit = null; lastCtx = null; clearTimeout(draftTimer); $('sugg').hidden = true; $('editor').hidden = true; $('saveNoteBtn').hidden = true; resetNoteArms(); }
+function stopEdit(){ nEdit = null; clearTimeout(draftTimer); $('sugg').hidden = true; $('editor').hidden = true; $('saveNoteBtn').hidden = true; resetNoteArms(); }
+let stripTimer = 0;
 function afterEdit(){
-  autoGrow(); drawSugg();
+  autoGrow(); noteSugg.draw(); edState();
   if (nBackArmed || nTrashArmed){ resetNoteArms(); setNoteMsg(''); }
   clearTimeout(draftTimer);
   draftTimer = setTimeout(() => { if (nEdit) store.set(draftKey(), noteDirty() ? edSnap() : ''); }, 500);
+  clearTimeout(stripTimer); stripTimer = setTimeout(drawNoteStrip, 300);   // the unsaved dot and a new note's title
 }
 $('editBtn').addEventListener('click', () => { const n = byId.get(current); if (n) startEdit(n); });
-$('newNoteBtn').addEventListener('click', () => { stack = []; current = null; startEdit(null, null); });
+$('newNoteBtn').addEventListener('click', () => { parkNoteEdit(); stack = []; current = null; startEdit(null, null); });
 $('editor').addEventListener('submit', e => e.preventDefault());
 $('edTitle').addEventListener('input', afterEdit);
 $('edFolder').addEventListener('input', afterEdit);
+$('edStatus').addEventListener('input', afterEdit);
 ta.addEventListener('input', afterEdit);
-ta.addEventListener('click', drawSugg);
-ta.addEventListener('keyup', e => { if ((e.key || "").startsWith("Arrow") || e.key === 'Home' || e.key === 'End') drawSugg(); });
-ta.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('sugg').hidden){ $('sugg').hidden = true; e.stopPropagation(); } });
-$('prevBtn').addEventListener('click', () => setPreview(!nPreview));
+ta.addEventListener('click', () => { noteSugg.draw(); edState(); });
+ta.addEventListener('keyup', e => { if ((e.key || '').startsWith('Arrow') || e.key === 'Home' || e.key === 'End'){ noteSugg.draw(); edState(); } });
+document.addEventListener('selectionchange', () => { if (document.activeElement === ta) edState(); });
+$('prevBtn').addEventListener('click', () => setPreview(true));
+$('writeBtn').addEventListener('click', () => setPreview(false));
 
-// [[ suggestions: shown under the toolbar while the caret sits inside an unfinished link.
-function linkCtx(){
-  const pos = ta.selectionStart; if (pos !== ta.selectionEnd) return null;
-  const before = ta.value.slice(0, pos), i = before.lastIndexOf('[['); if (i < 0) return null;
-  const q = before.slice(i + 2); if (/[\]\n|#]/.test(q) || q.length > 60) return null;
-  return { start: i, pos, q };
+// Replace part of a text box the way typing would, so Undo (Ctrl+Z, or the Undo button) can take it back.
+function replaceIn(el, start, end, text, selA, selB){
+  el.focus(); el.setSelectionRange(start, end);
+  let ok = false; try { ok = document.execCommand('insertText', false, text); } catch {}
+  if (!ok || el.value.slice(start, start + text.length) !== text) el.setRangeText(text, start, end, 'end');
+  if (selA != null) el.setSelectionRange(selA, selB == null ? selA : selB);
 }
-function drawSugg(){
-  const box = $('sugg'); suggFirst = '';
-  const c = nEdit && !nPreview ? linkCtx() : null; lastCtx = c;
-  if (!c){ box.hidden = true; return; }
-  const q = c.q.trim().toLowerCase(), live = liveNotes().filter(n => n.id !== nEdit.id);
-  const list = live.filter(n => !q || n.title.toLowerCase().includes(q)).sort((a, b) => (b.title.toLowerCase().startsWith(q) - a.title.toLowerCase().startsWith(q)) || (q ? 0 : b.updatedAt.localeCompare(a.updatedAt)) || a.title.localeCompare(b.title)).slice(0, 7);
-  const exact = live.some(n => n.title.toLowerCase() === q);
-  suggFirst = list[0] ? list[0].title : '';
-  box.innerHTML = list.map((n, i) => `<button type="button" data-pick="${esc(n.title)}"${i ? '' : ' class="act"'}><span>${esc(n.title)}</span><small>${esc(groupOf(n).name)}</small></button>`).join('')
-    + (q && !exact ? `<button type="button" data-pick="${esc(c.q.trim())}"><span>Link “${esc(c.q.trim())}”</span><small>new note, write it later</small></button>` : '');
-  box.hidden = !box.innerHTML;
-}
-function pickLink(title){
-  const c = lastCtx; if (!c) return;
-  let end = c.pos; if (ta.value.slice(end, end + 2) === ']]') end += 2;
-  ta.focus(); ta.setRangeText('[[' + title + ']]', c.start, end, 'end');
-  afterEdit();
-}
-$('sugg').addEventListener('pointerdown', e => e.preventDefault());
-$('sugg').addEventListener('click', e => { const b = e.target.closest('[data-pick]'); if (b) pickLink(b.dataset.pick); });
 
-// Toolbar. Each button works on the selection, or on the current line.
+// [[ suggestions: shown under the toolbar (or under an NPC sheet's text box) while the caret sits in an unfinished link.
+// They offer notes and NPCs; an NPC is linked by name, or by job when it has no name.
+function linkSuggestions(q, opt){
+  const lq = q.trim().toLowerCase();
+  const notes = liveNotes().filter(n => n.id !== opt.noteId && (!lq || n.title.toLowerCase().includes(lq)))
+    .map(n => ({ t: n.title, k: groupOf(n).name, s: n.title.toLowerCase().startsWith(lq) ? 2 : 1, up: n.updatedAt, npc: false }));
+  const npcs = NPCX.list.filter(r => r.id !== opt.npcId).map(r => ({ r, t: npcLinkName(r) })).filter(x => x.t)
+    .filter(x => !lq || [x.t, x.r.name, x.r.role, x.r.place, x.r.job].join(' ').toLowerCase().includes(lq))
+    .map(({ r, t }) => ({ t, k: 'NPC' + (npcName(r) && npcRole(r) ? ' · ' + npcRole(r) : '') + (npcPlace(r) && !t.includes('(') ? ' · ' + npcPlace(r) : ''), s: t.toLowerCase().startsWith(lq) || npcRole(r).toLowerCase().startsWith(lq) ? 2 : 1, up: String(r.updatedAt || ''), npc: true }));
+  const pref = opt.prefer === 'npc' ? x => x.npc : x => !x.npc;
+  const all = notes.concat(npcs).sort((a, b) => (b.s - a.s) || (lq ? 0 : (pref(b) - pref(a)) || b.up.localeCompare(a.up)) || a.t.localeCompare(b.t));
+  return all.slice(0, 8);
+}
+function makeSugg(box, opts){
+  const S = { el: null, ctx: null, first: '' };
+  S.ctxOf = el => {
+    const pos = el.selectionStart; if (pos !== el.selectionEnd) return null;
+    const before = el.value.slice(0, pos), i = before.lastIndexOf('[['); if (i < 0) return null;
+    const q = before.slice(i + 2); if (/[\]\n|#]/.test(q) || q.length > 60) return null;
+    return { start: i, pos, q };
+  };
+  S.draw = () => {
+    S.first = '';
+    const c = S.el && opts.active() ? S.ctxOf(S.el) : null; S.ctx = c;
+    if (!c){ box.hidden = true; return; }
+    const o = opts.exclude(), list = linkSuggestions(c.q, o), q = c.q.trim();
+    const exact = q && resolveLink(q);
+    S.first = list[0] ? list[0].t : '';
+    box.innerHTML = list.map((x, i) => `<button type="button" data-pick="${esc(x.t)}"${i ? '' : ' class="act"'}><span>${x.npc ? '<i class="npcdot" aria-hidden="true"></i>' : ''}${esc(x.t)}</span><small>${esc(x.k)}</small></button>`).join('')
+      + (q && !exact ? `<button type="button" data-pick="${esc(q)}"><span>Link “${esc(q)}”</span><small>not written yet</small></button>` : '')
+      + (!list.length && !q ? '<div class="sempty">Start typing a note title, an NPC name or a job.</div>' : '');
+    box.hidden = !box.innerHTML;
+  };
+  S.pick = title => {
+    const c = S.ctx, el = S.el; if (!c || !el) return;
+    let end = c.pos; if (el.value.slice(end, end + 2) === ']]') end += 2;
+    const text = '[[' + title + ']]';
+    replaceIn(el, c.start, end, text, c.start + text.length);
+    box.hidden = true; opts.changed && opts.changed();
+  };
+  box.addEventListener('pointerdown', e => e.preventDefault());
+  box.addEventListener('click', e => { const b = e.target.closest('[data-pick]'); if (b) S.pick(b.dataset.pick); });
+  return S;
+}
+const noteSugg = makeSugg($('sugg'), { active: () => !!nEdit && !nPreview, exclude: () => ({ noteId: nEdit && nEdit.id, prefer: 'note' }), changed: afterEdit });
+noteSugg.el = ta;
+ta.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !$('sugg').hidden){ $('sugg').hidden = true; e.stopPropagation(); return; }
+  if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+  const k = e.key.toLowerCase(), map = { b: 'b', i: 'i', k: 'link' };
+  if (map[k] && !e.shiftKey){ e.preventDefault(); fmt(map[k]); }
+});
+$('editor').addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's'){ e.preventDefault(); saveNote(); } });
+
+// ---------- toolbar ----------
+// Line tools (style, lists) work on every line the selection touches. Bold and italic wrap the selection, or the
+// word under the caret, and tapping them again takes the marks off.
+function lineSpan(el){
+  const v = el.value, s = el.selectionStart, e = el.selectionEnd, a = v.lastIndexOf('\n', s - 1) + 1;
+  let b = v.indexOf('\n', e > s && v[e - 1] === '\n' ? e - 1 : e); if (b < 0) b = v.length;
+  return { a, b, lines: v.slice(a, b).split('\n') };
+}
+function setLines(fn){
+  const { a, b, lines } = lineSpan(ta), one = ta.selectionStart === ta.selectionEnd, text = fn(lines).join('\n');
+  replaceIn(ta, a, b, text, one ? a + text.length : a, a + text.length);
+}
+const listKind = l => /^\s*[-*+] \[[ xX]\] /.test(l) ? 'task' : /^\s*[-*+] /.test(l) ? 'ul' : /^\s*\d+[.)] /.test(l) ? 'ol' : '';
+const LIST_RE = /^(\s*)(?:[-*+] \[[ xX]\] |[-*+] |\d+[.)] )?/;
+const lineStyle = l => /^##? /.test(l) ? 'h2' : /^#{3,6} /.test(l) ? 'h3' : /^> ?/.test(l) ? 'q' : 'p';
+function edState(){
+  if (!nEdit || nPreview) return;
+  const { lines } = lineSpan(ta), l = lines[0] || '';
+  $('edStyle').value = lineStyle(l);
+  for (const k of ['ul', 'ol', 'task']){ const b = document.querySelector(`.edtools [data-fmt="${k}"]`); if (b) b.setAttribute('aria-pressed', String(listKind(l) === k)); }
+}
+function wrapMark(m){
+  const v = ta.value; let s = ta.selectionStart, e = ta.selectionEnd;
+  while (e > s && /\s/.test(v[e - 1])) e--; while (s < e && /\s/.test(v[s])) s++;
+  if (s === e){
+    const L = (/[\p{L}\p{N}'’_-]*$/u.exec(v.slice(0, s)) || [''])[0].length, R = (/^[\p{L}\p{N}'’_-]*/u.exec(v.slice(s)) || [''])[0].length;
+    s -= L; e += R;
+  }
+  const sel = v.slice(s, e);
+  let l = 0; while (s - l - 1 >= 0 && v[s - l - 1] === '*') l++;
+  let r = 0; while (e + r < v.length && v[e + r] === '*') r++;
+  const has = m === '**' ? l >= 2 && r >= 2 && l !== 4 : l % 2 === 1 && r % 2 === 1;
+  if (sel && has){ replaceIn(ta, s - m.length, e + m.length, sel, s - m.length, e - m.length); return; }
+  if (!sel){ replaceIn(ta, s, e, m + m, s + m.length); return; }
+  replaceIn(ta, s, e, m + sel + m, s + m.length, e + m.length);
+}
 function fmt(kind){
-  const s = ta.selectionStart, e = ta.selectionEnd, v = ta.value, sel = v.slice(s, e), ls = v.lastIndexOf('\n', s - 1) + 1;
-  ta.focus();
-  if (kind === 'b' || kind === 'i'){
-    const m = kind === 'b' ? '**' : '*';
-    if (sel) ta.setRangeText(m + sel + m, s, e, 'end'); else { ta.setRangeText(m + m, s, e, 'end'); ta.setSelectionRange(s + m.length, s + m.length); }
-  } else if (kind === 'h'){
-    const cur = /^(#{1,6}) /.exec(v.slice(ls, ls + 8));
-    if (!cur) ta.setRangeText('## ', ls, ls, 'preserve'); else if (cur[1].length === 2) ta.setRangeText('### ', ls, ls + 3, 'preserve'); else ta.setRangeText('', ls, ls + cur[0].length, 'preserve');
-  } else if (kind === 'ul' || kind === 'task'){
-    const p = kind === 'ul' ? '- ' : '- [ ] ';
-    if (!v.slice(ls).startsWith(p)){ ta.setRangeText(p, ls, ls, 'preserve'); if (s === ls) ta.setSelectionRange(s + p.length, e + p.length); }
+  if (kind === 'b' || kind === 'i') wrapMark(kind === 'b' ? '**' : '*');
+  else if (kind === 'ul' || kind === 'ol' || kind === 'task'){
+    setLines(lines => {
+      const filled = lines.filter(l => l.trim()), all = filled.length > 0 && filled.every(l => listKind(l) === kind);
+      let i = 0;
+      return lines.map(l => {
+        if (!l.trim() && lines.length > 1) return l;
+        const m = LIST_RE.exec(l), ind = m[1], rest = l.slice(m[0].length).replace(/^(#{1,6} |> ?)/, '');
+        if (all) return ind + rest;
+        i++; return ind + (kind === 'ul' ? '- ' : kind === 'task' ? '- [ ] ' : i + '. ') + rest;
+      });
+    });
+  } else if (kind === 'table'){
+    const v = ta.value, p = ta.selectionEnd, eol = v.indexOf('\n', p) < 0 ? v.length : v.indexOf('\n', p);
+    const lineHas = v.slice(v.lastIndexOf('\n', p - 1) + 1, eol).trim() !== '';
+    const head = (lineHas ? '\n\n' : (eol > 0 && v[eol - 1] !== '\n' && v.slice(0, eol).trim() ? '\n' : ''));
+    const tbl = '| Column | Column | Column |\n|---|---|---|\n|  |  |  |\n';
+    const at = lineHas ? eol : v.lastIndexOf('\n', p - 1) + 1;
+    replaceIn(ta, at, at, head + tbl, at + head.length + 2, at + head.length + 8);
   } else if (kind === 'link'){
-    ta.setRangeText('[[' + sel, s, e, 'end');
+    const s = ta.selectionStart, e = ta.selectionEnd, sel = ta.value.slice(s, e).trim();
+    replaceIn(ta, s, e, '[[' + sel, s + 2 + sel.length);
+  } else if (kind === 'undo' || kind === 'redo'){
+    ta.focus(); try { document.execCommand(kind); } catch {}
   }
   afterEdit();
 }
-document.querySelector('.edtools').addEventListener('pointerdown', e => { if (e.target.closest('[data-fmt]')) e.preventDefault(); });
-document.querySelector('.edtools').addEventListener('click', e => { const b = e.target.closest('[data-fmt]'); if (b && !b.disabled) fmt(b.dataset.fmt); });
+$('edStyle').addEventListener('change', () => {
+  const v = $('edStyle').value;
+  setLines(lines => lines.map(l => { if (!l.trim() && lines.length > 1) return l; const rest = l.replace(/^(#{1,6} |> ?)/, ''); return (v === 'h2' ? '## ' : v === 'h3' ? '### ' : v === 'q' ? '> ' : '') + rest; }));
+  afterEdit();
+});
+document.querySelector('.edtools').addEventListener('pointerdown', e => { if (e.target.closest('button[data-fmt]')) e.preventDefault(); });
+document.querySelector('.edtools').addEventListener('click', e => {
+  const h = e.target.closest('[data-help]'); if (h){ openHelp(h.dataset.help); return; }
+  const b = e.target.closest('[data-fmt]'); if (b && !b.disabled) fmt(b.dataset.fmt);
+});
 // Return picks the top suggestion, and continues or ends a list.
 ta.addEventListener('beforeinput', e => {
   if (e.inputType !== 'insertLineBreak' && e.inputType !== 'insertParagraph') return;
-  if (!$('sugg').hidden && suggFirst && lastCtx){ e.preventDefault(); pickLink(suggFirst); return; }
+  if (!$('sugg').hidden && noteSugg.first && noteSugg.ctx){ e.preventDefault(); noteSugg.pick(noteSugg.first); return; }
   const s = ta.selectionStart; if (s !== ta.selectionEnd) return;
   const v = ta.value, ls = v.lastIndexOf('\n', s - 1) + 1, m = /^(\s*)(- \[[ xX]\] |[-*] |(\d+)\. )(.*)$/.exec(v.slice(ls, s));
   if (!m) return;
   e.preventDefault();
-  if (!m[4].trim()) ta.setRangeText('', ls, s, 'end');
-  else ta.setRangeText('\n' + m[1] + (m[3] ? (Number(m[3]) + 1) + '. ' : m[2].startsWith('- [') ? '- [ ] ' : m[2]), s, s, 'end');
+  if (!m[4].trim()) replaceIn(ta, ls, s, '', ls);
+  else { const t = '\n' + m[1] + (m[3] ? (Number(m[3]) + 1) + '. ' : m[2].startsWith('- [') ? '- [ ] ' : m[2]); replaceIn(ta, s, s, t, s + t.length); }
   afterEdit();
 });
 
 // ---------- saving ----------
+const linkRe = name => new RegExp('\\[\\[\\s*' + escRe(name) + '\\s*((?:#[^\\]|\\n]*)?(?:\\\\?\\|[^\\]\\n]*)?)\\]\\]', 'gi');
+// After a rename, rewrite [[old]] links in other notes and on NPC sheets. Returns how many were changed.
 async function relink(oldTitle, newTitle, selfId){
-  const re = new RegExp('\\[\\[\\s*' + escRe(oldTitle) + '\\s*((?:#[^\\]|\\n]*)?(?:\\\\?\\|[^\\]\\n]*)?)\\]\\]', 'gi');
+  const re = linkRe(oldTitle);
   let count = 0;
-  for (const o of NOTES.slice()){
+  if (notesCol) for (const o of NOTES.slice()){
     if (o.id === selfId) continue;
     const nb = o.body.replace(re, (_, rest) => '[[' + newTitle + rest + ']]');
     if (nb !== o.body){ await notesCol.doc(o.id).update({ body: nb }); applyLocal({ id: o.id, body: nb }); count++; }
+  }
+  return count + await relinkNpcs(re, newTitle, selfId);
+}
+async function relinkNpcs(re, newName, skipId){
+  if (!col) return 0;
+  let count = 0;
+  for (const r of NPCX.list.slice()){
+    if (r.id === skipId) continue;
+    const ch = {};
+    for (const [k, v] of Object.entries(r)) if (typeof v === 'string' && !NPC_LINK_SKIP.has(k)){ const nv = v.replace(re, (_, rest) => '[[' + newName + rest + ']]'); if (nv !== v) ch[k] = nv; }
+    if (Object.keys(ch).length){ try { await col.doc(r.id).update(ch); count++; } catch {} }
   }
   return count;
 }
@@ -966,7 +1212,7 @@ async function pruneHistory(id){
 }
 async function saveNote(){
   if (nSaving || !nEdit || !notesCol) return;
-  const title = $('edTitle').value.trim().replace(/\s+/g, ' '), folder = $('edFolder').value, body = ta.value.replace(/\r\n/g, '\n').replace(/\s+$/, '') + '\n';
+  const title = $('edTitle').value.trim().replace(/\s+/g, ' '), folder = $('edFolder').value, body = edBody().replace(/\r\n/g, '\n').replace(/\s+$/, '') + '\n';
   if (!title){ setNoteMsg('Give the note a title before saving.', 'err'); $('edTitle').focus(); return; }
   if (/[\[\]|#^\\]/.test(title)){ setNoteMsg('A title can\'t contain [ ] | # ^ or \\, because links use them.', 'err'); $('edTitle').focus(); return; }
   const clash = byTitle.get(title.toLowerCase());
@@ -986,10 +1232,13 @@ async function saveNote(){
     applyLocal({ id, ...doc });
     const moved = old && old.title !== title ? await relink(old.title, title, id) : 0;
     const isNew = !old;
+    edTabs.delete(isNew ? NEW_TAB : id);
+    if (isNew){ const ti = oTabs.indexOf(NEW_TAB); if (ti >= 0) oTabs[ti] = id; }
+    saveTabs();
     stopEdit(); refreshLists();
     if (isNew) stack.push(id);
     showNote(byId.get(id));
-    setNoteMsg(moved ? `Saved. Updated the links in ${moved} other note${moved === 1 ? '' : 's'}.` : 'Saved.', 'ok');
+    setNoteMsg(moved ? `Saved. Updated the links in ${moved} other note${moved === 1 ? '' : 's'} and NPC sheet${moved === 1 ? '' : 's'}.` : 'Saved.', 'ok');
     if (old) pruneHistory(id);
   } catch (e) {
     const c = e && e.code;
@@ -1004,6 +1253,8 @@ $('readerBack').addEventListener('click', () => {
   if (!nEdit){ goBack(); return; }
   if (noteDirty() && !nBackArmed){ nBackArmed = true; $('backLbl').textContent = 'Discard?'; setNoteMsg('You have unsaved changes. Tap Discard? to drop them, or Save.', 'err'); return; }
   const id = nEdit.id; store.set(draftKey(), ''); stopEdit(); setNoteMsg('');
+  if (id) edTabs.delete(id); else dropNoteTab(NEW_TAB);
+  saveTabs();
   const n = id ? byId.get(id) : null;
   if (n) showNote(n); else if (stack.length && byId.get(stack[stack.length - 1])) showNote(byId.get(stack[stack.length - 1])); else closeReader();
 });
@@ -1022,7 +1273,7 @@ $('histBtn').addEventListener('click', async () => {
 });
 $('histList').addEventListener('click', e => {
   const b = e.target.closest('[data-h]'); if (!b) return; const h = histCache[Number(b.dataset.h)]; if (!h) return;
-  $('edTitle').value = h.title || $('edTitle').value; if (h.folder) fillFolders(h.folder); ta.value = h.body || '';
+  $('edTitle').value = h.title || $('edTitle').value; if (h.folder) fillFolders(h.folder); setEdBody(h.body || '');
   setPreview(false); afterEdit(); $('histList').hidden = true; $('readerPane').scrollTop = 0;
   setNoteMsg(`Loaded the version from ${fmtDateTime(h.savedAt)}. Tap Save to bring it back, or Cancel to keep the current one.`, '');
 });
@@ -1037,7 +1288,7 @@ $('trashBtn').addEventListener('click', async () => {
   $('trashBtn').disabled = true;
   try {
     await notesCol.doc(n.id).update({ trashed: true, trashedAt: new Date().toISOString() });
-    store.set(draftKey(), ''); applyLocal({ id: n.id, trashed: true }); stopEdit(); refreshLists(); goBack();
+    store.set(draftKey(), ''); applyLocal({ id: n.id, trashed: true }); stopEdit(); dropNoteTab(n.id); stack = stack.filter(x => x !== n.id); stack.push(n.id); refreshLists(); goBack();
   } catch { setNoteMsg('Could not move the note to the trash. Try again.', 'err'); resetNoteArms(); }
   finally { $('trashBtn').disabled = false; }
 });
@@ -1055,9 +1306,116 @@ async function purgeNote(btn){
     const ref = notesCol.doc(n.id), snap = await ref.collection('history').limit(100).get();
     for (const d of snap.docs) await ref.collection('history').doc(d.id).delete();
     await ref.delete();
-    setNotes(rawNotes.filter(x => x.id !== n.id)); refreshLists(); goBack();
+    setNotes(rawNotes.filter(x => x.id !== n.id)); dropNoteTab(n.id); refreshLists(); goBack();
   } catch { setNoteMsg('Could not delete the note. Try again.', 'err'); btn.disabled = false; }
 }
+
+// ---------- help ----------
+// The "?" in the top bar (and next to the editing tools) opens this guide. The "You type / You see" examples are
+// rendered by the same code that shows notes, so they always match what a note really looks like.
+const helpEx = rows => `<div class="tbl"><table class="hx"><thead><tr><th>You type</th><th>You see</th></tr></thead><tbody>${rows.map(([md, tip]) => `<tr><td><code>${esc(md).replace(/\n/g, '<br>')}</code>${tip ? `<small>${tip}</small>` : ''}</td><td class="prose">${renderMd(md)}</td></tr>`).join('')}</tbody></table></div>`;
+const HELP = [
+  ['start', 'Getting around', () => `
+<p>Vael Notes keeps the design notes, the NPC roster and the island map in one place. Everything saves for the whole team as soon as you tap <b>Save</b>.</p>
+<h3>The four tabs at the bottom</h3>
+<ul>
+<li><b>Notes:</b> the design notes, sorted into groups (Canon, Game design, Combat, Magic and so on). <b>Recent</b> shows what changed last, and the search box looks through every note.</li>
+<li><b>NPCs:</b> everyone on the island. Each NPC has a character sheet.</li>
+<li><b>Graph:</b> a map of how notes and NPCs link to each other.</li>
+<li><b>Island:</b> the to-scale plan of Vael Island.</li>
+</ul>
+<h3>Tabs for open notes and NPCs</h3>
+<p>Every note you open gets a tab along the top of the Notes screen, so you can jump between notes without searching again. <b>All notes</b> on the left takes you back to the list. NPC sheets work the same way: each NPC you open gets a tab at the top of the sheet.</p>
+<ul>
+<li>Tap <b>×</b> on a tab to close it. A middle click closes it too.</li>
+<li>A <span class="dotk"></span> dot means that tab has changes you haven't saved. They're kept on this device, and the note or sheet opens straight back into editing when you return to it.</li>
+<li>Closing a tab with unsaved changes asks first: tap <b>Discard?</b> to drop them.</li>
+</ul>
+<p>Open tabs are remembered on this device, so they're still there after you reload.</p>`],
+  ['writing', 'Writing notes', () => `
+<p>Tap <b>Edit</b> on a note, or <b>New note</b> in the list. The boxes above the text set the note's <b>Section</b> (which group it's listed in) and its <b>Status</b> (Draft, Canon, Future scope or Archived), which shows as a coloured label.</p>
+<h3>The toolbar</h3>
+<ul>
+<li><b>Text / Section / Heading / Quote:</b> the first box sets what the current line is. A <b>Section</b> becomes a heading you can tap to fold open and shut; a note with three or more sections starts folded. A <b>Heading</b> is a smaller title inside a section.</li>
+<li><b>B</b> and <b>I</b> make the selected text bold or italic. With nothing selected they work on the word the cursor is in. Tap again to undo it.</li>
+<li>The three list buttons make <b>bullets</b>, a <b>numbered list</b> or a <b>checklist</b>. They work on every line you've selected, and tapping again turns the list back into plain lines. Press Return to start the next item; press it on an empty item to end the list.</li>
+<li><b>Table</b> adds a small table to fill in.</li>
+<li><b>Link</b> connects a note or an NPC (see the Links tab).</li>
+<li><b>Undo</b> and <b>Redo</b> step back and forward through your changes, toolbar changes included.</li>
+<li><b>Write / Preview</b> switches between the text and how it will look.</li>
+</ul>
+<p>Keyboard shortcuts: Ctrl+B bold, Ctrl+I italic, Ctrl+K link, Ctrl+Z undo, Ctrl+S save.</p>
+<h3>What the marks mean</h3>
+<p>The toolbar types these marks for you, but you can type them yourself too:</p>
+${helpEx([
+  ['## Wallrun', 'a Section'],
+  ['### Timings', 'a Heading'],
+  ['**bold** and *italic*', ''],
+  ['- a bullet\n- another', ''],
+  ['1. first\n2. second', ''],
+  ['- [ ] to do\n- [x] done', 'type an x in the box to tick it'],
+  ['> A quote or an aside.', ''],
+  ['| Speed | Time |\n|---|---|\n| 6.6 m/s | 1.5 s |', 'a table'],
+  ['---', 'a dividing line'],
+])}
+<h3>Saving, history and the trash</h3>
+<ul>
+<li>Nothing is shared until you tap <b>Save</b>. While you type, a draft is kept on this device, so a closed tab or a dropped connection doesn't lose your text.</li>
+<li><b>History</b> lists earlier versions of the note. Load one and tap Save to bring it back.</li>
+<li><b>Move to trash</b> hides a note. Restore it from the <b>Trash</b> group, or delete it for good from there.</li>
+<li>If someone else saves the same note while you're editing, you'll see a warning. Saving keeps their version in History.</li>
+</ul>`],
+  ['links', 'Links', () => `
+<p>Links connect notes and NPCs to each other. Each one shows up in the reader as a tappable word, under <b>Connections</b> at the bottom of a note or an NPC sheet, and as a line on the Graph.</p>
+<ul>
+<li>Type <code>[[</code>, or tap <b>Link</b>, and a list of matching notes and NPCs appears. Keep typing to narrow it down, then tap one or press Return.</li>
+<li><b>Notes</b> are linked by title: <code>${esc('[[Wallrun System]]')}</code>.</li>
+<li><b>NPCs</b> are linked by name. An NPC without a name is linked by its job: <code>${esc('[[Innkeeper]]')}</code>. When several NPCs share a name or a job, the place goes in brackets: <code>${esc('[[Guard captain (Port Town)]]')}</code>. The list picks the right form for you.</li>
+<li>To show different words, add them after a bar: <code>${esc('[[Wallrun System|wallrunning]]')}</code> shows “wallrunning”.</li>
+<li>You can link something that doesn't exist yet. It shows dashed, and tapping it lets you write that note.</li>
+<li>Renaming a note or an NPC updates the links to it everywhere.</li>
+</ul>
+<h3>Linking NPCs to each other</h3>
+<p>On an NPC sheet, type <code>[[</code> in any text box, for example <b>Relationships</b> on the More tab: <code>${esc('Owes money to [[Innkeeper]]. Fears [[Gronek]].')}</code>. You can also tap <b>Link an NPC or note</b> under Connections on the Basics tab. The sheet's Connections list who this NPC links to, and which NPCs and notes mention them.</p>`],
+  ['npcs', 'NPCs', () => `
+<ul>
+<li><b>Overview</b> counts the NPCs by tier and place, and shows how much is written.</li>
+<li><b>Write first</b> lists the key characters, one place at a time.</li>
+<li><b>Roster</b> lists everyone, with filters for place, job, tier and writing status. <b>Jobs</b> groups them by job.</li>
+<li>Tap an NPC to open their character sheet. Its tabs (Basics, Description, Story, Behavior, Schedule, More) hold everything about them. Tap <b>Save</b> to keep changes.</li>
+<li><b>Close</b> hides the sheet. Unsaved changes stay with that NPC's tab, marked with a dot, until you save or discard them.</li>
+<li><b>Tiers:</b> Key characters get a full backstory, Supporting ones a short bio, and Background NPCs a single line.</li>
+</ul>`],
+  ['graph', 'Graph', () => `
+<p>The Graph shows every note as a dot and every NPC as a square. Each line is a link between them. Dots are coloured by note group, and a dashed dot is something linked but not written yet.</p>
+<ul>
+<li>Tap a dot to see what it connects to. Tap it again, or tap <b>Open</b>, to open it.</li>
+<li>Drag the background to move around. Pinch, or use the mouse wheel, to zoom. Drag a dot to move it.</li>
+<li>The buttons at the top show or hide notes and NPCs. NPCs that don't link to anything are hidden at first; turn on <b>Unlinked NPCs</b> to see all of them.</li>
+<li><b>Show in graph</b>, at the bottom of a note or an NPC sheet, jumps to that dot.</li>
+</ul>`],
+  ['island', 'Island & more', () => `
+<ul>
+<li><b>Island:</b> pinch or scroll to zoom and drag to pan. <b>Measure</b> lets you drag out a distance, and the Places list jumps to each town.</li>
+<li><b>Zurivel:</b> the Zurivel Dictionary note has a translator. Any note can show one: put a line with three backticks and <code>zurivel</code>, then a line with three backticks.</li>
+<li><b>Settings</b> (the gear) changes the theme and text size, and is where the owner invites people to the team.</li>
+</ul>`],
+];
+let helpTopic = store.get('vael.helpTopic') || 'start';
+function drawHelp(){
+  if (!HELP.some(h => h[0] === helpTopic)) helpTopic = 'start';
+  $('helpTabs').innerHTML = HELP.map(([id, name]) => `<button type="button" role="tab" data-p="${id}" aria-selected="${id === helpTopic}">${name}</button>`).join('');
+  $('helpBody').innerHTML = HELP.find(h => h[0] === helpTopic)[2]();
+  $('helpPane').scrollTop = 0;
+}
+function openHelp(topic){ if (topic) helpTopic = topic; drawHelp(); $('helpScrim').hidden = false; $('helpSheet').hidden = false; $('helpClose').focus(); }
+function closeHelp(){ $('helpScrim').hidden = true; $('helpSheet').hidden = true; }
+$('helpBtn').addEventListener('click', () => openHelp());
+$('helpClose').addEventListener('click', closeHelp);
+$('helpScrim').addEventListener('click', closeHelp);
+$('helpTabs').addEventListener('click', e => { const b = e.target.closest('button[data-p]'); if (b){ helpTopic = b.dataset.p; store.set('vael.helpTopic', helpTopic); drawHelp(); } });
+$('helpBody').addEventListener('click', e => { if (e.target.closest('a.wl')) e.preventDefault(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('helpSheet').hidden){ closeHelp(); e.stopImmediatePropagation(); } }, true);
 
 // ---------- data ----------
 refreshLists();

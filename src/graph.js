@@ -1,34 +1,44 @@
 // ---------- graph ----------
-// Every note is a dot, every [[link]] a line. Links to notes that don't exist yet show as dashed dots.
-const G = { nodes: [], edges: [], byKey: new Map(), pos: new Map(), cam: { x: 0, y: 0, s: 1 }, w: 1, h: 1, sel: null, drag: null, alpha: 0, raf: 0, settled: false, colors: null };
+// The Graph tab: every note is a dot and every NPC a square; every [[link]] is a line. Links to things that don't
+// exist yet show as dashed dots. Node keys: n:<note title>, p:<npc id>, m:<missing name>.
+const G = { nodes: [], edges: [], byKey: new Map(), pos: new Map(), cam: { x: 0, y: 0, s: 1 }, w: 1, h: 1, sel: null, drag: null, alpha: 0, raf: 0, settled: false, colors: null,
+  show: Object.assign({ notes: true, npcs: true, lone: false }, (() => { try { return JSON.parse(store.get('vael.graphShow') || '{}'); } catch { return {}; } })()) };
 window.__vaelGraph = G;
 const gcv = $('graphCv'), gctx = gcv.getContext('2d');
+const graphOpen = () => !$('v-graph').hidden;
 const hash01 = s => { let h = 2166136261; for (let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return ((h >>> 0) % 10000) / 10000; };
 function graphColors(){
   const cs = getComputedStyle(document.documentElement), v = k => cs.getPropertyValue(k).trim();
-  G.colors = { ink: v('--ink'), muted: v('--muted'), bg: v('--bg'), key: v('--key'), g: GROUPS.map((_, i) => v('--g' + i)) };
+  G.colors = { ink: v('--ink'), muted: v('--muted'), bg: v('--bg'), key: v('--key'), npc: v('--npc'), g: GROUPS.map((_, i) => v('--g' + i)) };
 }
+const linkKey = t => { const o = resolveLink(t); return o && o.note ? 'n:' + o.note.title.toLowerCase() : o && o.npc ? 'p:' + o.npc.id : 'm:' + String(t).trim().toLowerCase(); };
 function buildGraph(){
-  const live = liveNotes(), nodes = [], byKey = new Map(), edges = [], seen = new Set();
-  for (const n of live){ const nd = { key: n.title.toLowerCase(), id: n.id, title: n.title, gi: GROUPS.indexOf(groupOf(n)), missing: false, deg: 0 }; nodes.push(nd); byKey.set(nd.key, nd); }
-  for (const n of live){
-    const a = byKey.get(n.title.toLowerCase());
-    for (const t of linksIn(n.body)){
-      const k = t.toLowerCase(); if (k === a.key) continue;
-      let b = byKey.get(k); if (!b){ b = { key: k, id: null, title: t, gi: -1, missing: true, deg: 0 }; nodes.push(b); byKey.set(k, b); }
-      const ek = a.key < k ? a.key + '\u0000' + k : k + '\u0000' + a.key; if (seen.has(ek)) continue;
-      seen.add(ek); edges.push([a, b]); a.deg++; b.deg++;
-    }
+  const nodes = [], byKey = new Map(), edges = [], seen = new Set(), sh = G.show;
+  const add = nd => { nd.deg = 0; nodes.push(nd); byKey.set(nd.key, nd); return nd; };
+  if (sh.notes) for (const n of liveNotes()) add({ key: 'n:' + n.title.toLowerCase(), kind: 'note', id: n.id, title: n.title, gi: GROUPS.indexOf(groupOf(n)) });
+  if (sh.npcs) for (const r of NPCX.list) add({ key: 'p:' + r.id, kind: 'npc', id: r.id, title: npcShown(r), tier: r.tier, gi: -1 });
+  const link = (a, t) => {
+    const k = linkKey(t); if (k === a.key) return;
+    let b = byKey.get(k);
+    if (!b){ if (k[0] !== 'm') return; b = add({ key: k, kind: 'missing', id: null, title: String(t).trim(), gi: -1 }); }
+    const ek = a.key < k ? a.key + '\u0000' + k : k + '\u0000' + a.key; if (seen.has(ek)) return;
+    seen.add(ek); edges.push([a, b]); a.deg++; b.deg++;
+  };
+  for (const nd of nodes.slice()){
+    if (nd.kind === 'note'){ const n = byId.get(nd.id); for (const t of linksIn(n.body)) link(nd, t); }
+    else if (nd.kind === 'npc'){ const r = NPCX.byId.get(nd.id); if (r) for (const t of linksIn(npcText(r))) link(nd, t); }
   }
-  const hubs = new Set(nodes.slice().sort((x, y) => y.deg - x.deg).slice(0, 6).filter(n => n.deg > 2));
-  for (const nd of nodes){
+  // NPCs that link nowhere stay out of the way unless asked for.
+  const keep = sh.lone ? nodes : nodes.filter(n => n.kind !== 'npc' || n.deg > 0);
+  const hubs = new Set(keep.slice().sort((x, y) => y.deg - x.deg).slice(0, 6).filter(n => n.deg > 2));
+  for (const nd of keep){
     const p = G.pos.get(nd.key);
     if (p){ nd.x = p.x; nd.y = p.y; }
-    else { const ang = ((nd.gi < 0 ? 7 : nd.gi) / 8) * Math.PI * 2 + hash01(nd.key) * 0.7, rad = 120 + hash01(nd.key + 'r') * 140; nd.x = Math.cos(ang) * rad; nd.y = Math.sin(ang) * rad; }
-    nd.vx = 0; nd.vy = 0; nd.r = 4.5 + Math.sqrt(nd.deg) * 1.25; nd.sr = nd.r; nd.hub = hubs.has(nd);
+    else { const slot = nd.kind === 'npc' ? 6.5 : nd.gi < 0 ? 7 : nd.gi; const ang = (slot / 8) * Math.PI * 2 + hash01(nd.key) * 0.7, rad = 120 + hash01(nd.key + 'r') * 140; nd.x = Math.cos(ang) * rad; nd.y = Math.sin(ang) * rad; }
+    nd.vx = 0; nd.vy = 0; nd.r = (nd.kind === 'npc' ? (nd.tier === 'k' ? 5.5 : 4.2) : 4.5) + Math.sqrt(nd.deg) * 1.25; nd.sr = nd.r; nd.hub = hubs.has(nd);
   }
-  G.nodes = nodes; G.edges = edges; G.byKey = byKey;
-  if (G.sel && !byKey.has(G.sel)) G.sel = null;
+  G.nodes = keep; G.edges = edges; G.byKey = new Map(keep.map(n => [n.key, n]));
+  if (G.sel && !G.byKey.has(G.sel)) G.sel = null;
 }
 function gTick(a){
   const N = G.nodes;
@@ -58,7 +68,7 @@ function gFit(){
   if (!G.nodes.length) return;
   let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
   for (const n of G.nodes){ x0 = Math.min(x0, n.x); y0 = Math.min(y0, n.y); x1 = Math.max(x1, n.x); y1 = Math.max(y1, n.y); }
-  const top = 44, bottom = 84;   // room for the legend and the selection bar
+  const top = 92, bottom = 84;   // room for the legend, the buttons and the selection bar
   G.cam.s = Math.max(.25, Math.min(2, Math.min((G.w - 48) / Math.max(1, x1 - x0), (G.h - top - bottom - 30) / Math.max(1, y1 - y0))));
   G.cam.x = (x0 + x1) / 2; G.cam.y = (y0 + y1) / 2 - (top - bottom) / 2 / G.cam.s;
 }
@@ -70,6 +80,7 @@ function drawGraph(){
   const sel = G.sel ? G.byKey.get(G.sel) : null, near = new Set();
   if (sel){ near.add(sel); for (const [a, b] of G.edges){ if (a === sel) near.add(b); else if (b === sel) near.add(a); } }
   for (const [a, b] of G.edges){
+    if (!G.byKey.has(a.key) || !G.byKey.has(b.key)) continue;
     const hot = sel && (a === sel || b === sel);
     gctx.globalAlpha = sel ? (hot ? .95 : .08) : .26; gctx.strokeStyle = hot ? c.key : c.muted; gctx.lineWidth = hot ? 1.7 : 1;
     gctx.beginPath(); gctx.moveTo(X(a.x), Y(a.y)); gctx.lineTo(X(b.x), Y(b.y)); gctx.stroke();
@@ -77,26 +88,28 @@ function drawGraph(){
   for (const n of G.nodes){
     const r = Math.max(3.5, n.r * Math.min(1.5, Math.max(.75, s))); n.sr = r;
     gctx.globalAlpha = sel && !near.has(n) ? .22 : 1;
-    gctx.beginPath(); gctx.arc(X(n.x), Y(n.y), r, 0, Math.PI * 2);
-    if (n.missing){ gctx.fillStyle = c.bg; gctx.fill(); gctx.setLineDash([3, 3]); gctx.strokeStyle = c.muted; gctx.lineWidth = 1.4; gctx.stroke(); gctx.setLineDash([]); }
-    else { gctx.fillStyle = c.g[n.gi] || c.muted; gctx.fill(); if (n === sel){ gctx.strokeStyle = c.ink; gctx.lineWidth = 2.5; gctx.stroke(); } }
+    gctx.beginPath();
+    if (n.kind === 'npc'){ const q = r * .9; gctx.roundRect ? gctx.roundRect(X(n.x) - q, Y(n.y) - q, q * 2, q * 2, q * .35) : gctx.rect(X(n.x) - q, Y(n.y) - q, q * 2, q * 2); }
+    else gctx.arc(X(n.x), Y(n.y), r, 0, Math.PI * 2);
+    if (n.kind === 'missing'){ gctx.fillStyle = c.bg; gctx.fill(); gctx.setLineDash([3, 3]); gctx.strokeStyle = c.muted; gctx.lineWidth = 1.4; gctx.stroke(); gctx.setLineDash([]); }
+    else { gctx.fillStyle = n.kind === 'npc' ? c.npc : c.g[n.gi] || c.muted; gctx.fill(); if (n === sel){ gctx.strokeStyle = c.ink; gctx.lineWidth = 2.5; gctx.stroke(); } }
   }
   gctx.font = '600 12.5px "Alegreya Sans", "Segoe UI", system-ui, sans-serif'; gctx.textAlign = 'center'; gctx.textBaseline = 'top'; gctx.lineJoin = 'round';
-  // Labels: the selected note first, then the most connected. A label is skipped if it would sit on one already drawn.
+  // Labels: the selected dot first, then the most connected. A label is skipped if it would sit on one already drawn.
   const boxes = [], order = (sel ? [...near] : G.nodes.slice()).sort((a, b) => (b === sel) - (a === sel) || b.deg - a.deg);
   for (const n of order){
     const x = X(n.x), y = Y(n.y) + n.sr + 3, w = gctx.measureText(n.title).width, box = [x - w / 2 - 3, y - 2, x + w / 2 + 3, y + 15];
     if (n !== sel && boxes.some(b => box[0] < b[2] && b[0] < box[2] && box[1] < b[3] && b[1] < box[3])) continue;
     boxes.push(box);
     gctx.globalAlpha = 1; gctx.strokeStyle = c.bg; gctx.lineWidth = 3.5; gctx.strokeText(n.title, x, y);
-    gctx.fillStyle = n.missing ? c.muted : c.ink; gctx.fillText(n.title, x, y);
+    gctx.fillStyle = n.kind === 'missing' ? c.muted : c.ink; gctx.fillText(n.title, x, y);
   }
   gctx.globalAlpha = 1;
 }
 function gRun(){
   cancelAnimationFrame(G.raf);
   const step = () => {
-    if ($('graphView').hidden) return;
+    if (!graphOpen()) return;
     if (G.alpha > .02){ gTick(G.alpha); G.alpha *= .97; gSavePos(); }
     drawGraph();
     if (G.alpha > .02 || G.drag) G.raf = requestAnimationFrame(step);
@@ -111,25 +124,29 @@ function gResize(){
 }
 function gSelect(nd){
   G.sel = nd ? nd.key : null;
-  const n = nd && !nd.missing ? byId.get(nd.id) : null;
-  $('gselTitle').textContent = nd ? nd.title : 'Tap a note to see what it connects to.';
+  const n = nd && nd.kind === 'note' ? byId.get(nd.id) : null, r = nd && nd.kind === 'npc' ? NPCX.byId.get(nd.id) : null;
+  const conn = nd ? `${nd.deg} connection${nd.deg === 1 ? '' : 's'}` : '';
+  $('gselTitle').textContent = nd ? nd.title : 'Tap a dot to see what it connects to.';
   $('gselMeta').textContent = !nd ? 'Tap it again to open it. Pinch to zoom, drag to move around.'
-    : nd.missing ? `Not written yet · linked from ${nd.deg} note${nd.deg === 1 ? '' : 's'}`
-    : `${n ? groupOf(n).name : ''} · ${nd.deg} connection${nd.deg === 1 ? '' : 's'}`;
-  $('gselOpen').textContent = nd && nd.missing ? 'Write it' : 'Open';
-  $('gselOpen').hidden = !nd || (nd.missing && (notesReadOnly || !notesCol));
+    : nd.kind === 'missing' ? `Not written yet · linked from ${nd.deg} place${nd.deg === 1 ? '' : 's'}`
+    : r ? ['NPC', npcName(r) && npcRole(r), npcPlace(r), conn].filter(Boolean).join(' · ')
+    : `${n ? groupOf(n).name : ''} · ${conn}`;
+  $('gselOpen').textContent = nd && nd.kind === 'missing' ? 'Write it' : nd && nd.kind === 'npc' ? 'Open sheet' : 'Open';
+  $('gselOpen').hidden = !nd || (nd.kind === 'missing' && (notesReadOnly || !notesCol));
   $('graphSel').classList.toggle('idle', !nd);
   drawGraph();
 }
 function gOpenSel(){
   const nd = G.sel ? G.byKey.get(G.sel) : null; if (!nd) return;
-  stack = [];
-  if (nd.missing){ if (!notesReadOnly && notesCol){ current = null; startEdit(null, { title: nd.title, folder: 'Story & Lore' }); } }
+  if (nd.kind === 'npc'){ openNpcTab(nd.id); return; }
+  showView('notes');
+  parkNoteEdit(); stack = [];
+  if (nd.kind === 'missing'){ if (!notesReadOnly && notesCol){ current = null; startEdit(null, { title: nd.title, folder: 'Story & Lore' }); } }
   else openNote(nd.id, true);
 }
 function openGraph(){
   if (!gResize()) return;
-  graphColors(); buildGraph();
+  graphColors(); buildGraph(); drawLegend();
   if (!G.settled && G.nodes.length){
     for (let i = 0, a = 1; i < 320; i++, a = Math.max(.05, a * .988)) gTick(a);   // settle before the first frame
     gSavePos(); gFit(); G.settled = true; G.alpha = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : .08;
@@ -137,22 +154,30 @@ function openGraph(){
   gSelect(G.sel ? G.byKey.get(G.sel) : null);
   gRun();
 }
-function applyGroupView(){
-  const g = group === 'graph';
-  $('notesPane').hidden = g; $('graphView').hidden = !g;
-  $('newNoteBtn').hidden = !notesLoaded || notesReadOnly || !notesCol || g;
-  if (g) openGraph();
+// Notes or NPCs changed: rebuild the graph if it is on screen (otherwise it rebuilds when opened).
+let graphTimer = 0;
+function graphChanged(){ clearTimeout(graphTimer); graphTimer = setTimeout(() => { if (graphOpen()) openGraph(); }, 120); }
+function showInGraph(key){
+  showView('graph');
+  const nd = G.byKey.get(key);
+  if (!nd && key[0] === 'p' && !G.show.lone){ G.show.lone = true; store.set('vael.graphShow', JSON.stringify(G.show)); openGraph(); }
+  const n2 = G.byKey.get(key);
+  if (n2){ G.cam.s = Math.max(G.cam.s, 1); G.cam.x = n2.x; G.cam.y = n2.y + 20 / G.cam.s; gSelect(n2); }
 }
-function showInGraph(id){
-  const n = byId.get(id); if (!n) return;
-  group = 'graph'; store.set('vael.noteGroup', group);
-  closeReader(); noteTabs(); applyGroupView();
-  const nd = G.byKey.get(n.title.toLowerCase());
-  if (nd){ G.cam.s = Math.max(G.cam.s, 1); G.cam.x = nd.x; G.cam.y = nd.y + 20 / G.cam.s; gSelect(nd); }
+function drawLegend(){
+  const tg = (k, label) => `<button type="button" class="gtog" data-gs="${k}" aria-pressed="${!!G.show[k]}">${label}</button>`;
+  $('graphLegend').innerHTML = `<div class="gtogs">${tg('notes', 'Notes')}${tg('npcs', 'NPCs')}${G.show.npcs ? tg('lone', 'Unlinked NPCs') : ''}</div><div class="gkey">`
+    + (G.show.notes ? GROUPS.map((g, i) => `<span><i style="background:var(--g${i})"></i>${g.name}</span>`).join('') : '')
+    + (G.show.npcs ? '<span><i class="sq"></i>NPC</span>' : '') + '<span><i class="un"></i>Not written yet</span></div>';
 }
-$('graphLegend').innerHTML = GROUPS.map((g, i) => `<span><i style="background:var(--g${i})"></i>${g.name}</span>`).join('') + '<span><i class="un"></i>Not written yet</span>';
+$('graphLegend').addEventListener('click', e => {
+  const b = e.target.closest('[data-gs]'); if (!b) return;
+  G.show[b.dataset.gs] = !G.show[b.dataset.gs]; store.set('vael.graphShow', JSON.stringify(G.show));
+  openGraph(); if (!G.sel){ gFit(); drawGraph(); }
+});
 $('graphFit').addEventListener('click', () => { gFit(); drawGraph(); });
 $('gselOpen').addEventListener('click', gOpenSel);
+window.addEventListener('vael:view', e => { if (e.detail === 'graph') openGraph(); else cancelAnimationFrame(G.raf); });
 
 // Touch and mouse: drag the background to move, drag a dot to rearrange, pinch or scroll to zoom.
 const gp = new Map(); let gdrag = null, gpinch = null;
@@ -193,8 +218,9 @@ const gEnd = e => {
 };
 gcv.addEventListener('pointerup', gEnd); gcv.addEventListener('pointercancel', gEnd);
 gcv.addEventListener('wheel', e => { e.preventDefault(); const p = glocal(e); gZoom(p[0], p[1], Math.exp(-e.deltaY * (e.deltaMode === 1 ? .05 : .0016))); }, { passive: false });
-new ResizeObserver(() => { if (!$('graphView').hidden && gResize()) drawGraph(); }).observe($('graphView'));
-const gRetheme = () => { graphColors(); if (!$('graphView').hidden) drawGraph(); };
+new ResizeObserver(() => { if (graphOpen() && gResize()) drawGraph(); }).observe($('graphView'));
+const gRetheme = () => { graphColors(); if (graphOpen()) drawGraph(); };
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', gRetheme);
 new MutationObserver(gRetheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+if (graphOpen()) requestAnimationFrame(openGraph);
 

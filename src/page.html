@@ -59,7 +59,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .topbar .act{flex:none}
 .views{flex:1;min-height:0;position:relative}
 .view{position:absolute;inset:0;display:flex;flex-direction:column}
-.tabbar{flex:none;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--rule);background:var(--panel);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+.tabbar{flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--rule);background:var(--panel);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 .tabbar button{background:none;border:0;min-height:var(--tabbar);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:var(--muted);letter-spacing:.03em}
 .tabbar svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .tabbar button[aria-selected="true"]{color:var(--ink);font-weight:700}
@@ -365,6 +365,7 @@ mark{background:color-mix(in srgb,var(--sup) 35%,transparent);color:inherit;bord
   <header class="topbar">
     <span class="brand">Vael Awakening</span>
     <span class="where" id="where">Design notes</span>
+    <button class="iconbtn" id="helpBtn" type="button" aria-label="Help: how this app works" title="How this app works"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.8"/><circle cx="12" cy="17.2" r=".6"/></svg></button>
   </header>
 
   <div class="views">
@@ -428,6 +429,7 @@ mark{background:color-mix(in srgb,var(--sup) 35%,transparent);color:inherit;bord
 
     <!-- NPCS -->
     <section class="view" id="v-npcs" aria-label="NPCs" hidden>
+      <nav class="otabs" id="npcStrip" aria-label="Open NPCs" hidden></nav>
       <nav class="subtabs" id="npcTabs" role="tablist" aria-label="NPC sections">
         <button type="button" role="tab" data-p="overview">Overview</button>
         <button type="button" role="tab" data-p="key">Write first</button>
@@ -483,6 +485,16 @@ mark{background:color-mix(in srgb,var(--sup) 35%,transparent);color:inherit;bord
         </div>
       </div>
       <button class="btn fab" id="addBtn" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add NPC</button>
+    </section>
+
+    <!-- GRAPH -->
+    <section class="view" id="v-graph" aria-label="Graph" hidden>
+      <div class="graph" id="graphView">
+        <canvas id="graphCv" aria-label="Graph of the notes, the NPCs and the links between them. The same connections are listed at the bottom of each note and on each NPC sheet."></canvas>
+        <div class="glegend" id="graphLegend"></div>
+        <div class="gbtns"><button type="button" id="graphFit">Fit all</button></div>
+        <div class="gsel idle" id="graphSel"><div><b id="gselTitle"></b><span id="gselMeta"></span></div><button type="button" class="btn" id="gselOpen" hidden>Open</button></div>
+      </div>
     </section>
 
     <!-- ISLAND -->
@@ -547,6 +559,7 @@ mark{background:color-mix(in srgb,var(--sup) 35%,transparent);color:inherit;bord
   <nav class="tabbar" role="tablist" aria-label="Sections">
     <button type="button" role="tab" data-v="notes" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M5 4h10l4 4v12H5z"/><path d="M9 11h6M9 15h6"/></svg>Notes</button>
     <button type="button" role="tab" data-v="npcs" aria-selected="false"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.8-3.2 3-5 5.5-5s4.7 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c2.4-.3 4.3 1.2 5 4.3"/></svg>NPCs</button>
+    <button type="button" role="tab" data-v="graph" aria-selected="false"><svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.4"/><circle cx="18" cy="6" r="2"/><circle cx="12" cy="17" r="2.8"/><circle cx="19.5" cy="16" r="1.6"/><path d="M8 8.2l2.6 6.4M16.2 7l-3 7.6M8.3 6.7l7.7-.6M14.8 16.6l3.2-.4"/></svg>Graph</button>
     <button type="button" role="tab" data-v="island" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M4 16c2-6 5-10 8-10s6 4 8 10"/><path d="M3 19c3-1.5 6-1.5 9 0s6 1.5 9 0"/></svg>Island</button>
   </nav>
 </div>
@@ -559,6 +572,7 @@ mark{background:color-mix(in srgb,var(--sup) 35%,transparent);color:inherit;bord
     <h2 id="dTitle">Character sheet</h2>
     <button class="btn" id="saveBtn" type="button">Save</button>
   </div>
+  <nav class="otabs" id="sheetStrip" aria-label="Open NPCs"></nav>
   <nav class="subtabs" id="sheetTabs" role="tablist" aria-label="Sheet sections">
     <button type="button" role="tab" data-p="basics">Basics</button>
     <button type="button" role="tab" data-p="look">Description</button>
@@ -586,7 +600,9 @@ mark{background:color-mix(in srgb,var(--sup) 35%,transparent);color:inherit;bord
           <label class="fld" for="f_job">Job section<input type="text" id="f_job" list="dlJob"></label>
           <label class="fld" for="f_faction">Faction<input type="text" id="f_faction" list="dlFaction"></label>
         </div>
+        <section class="conn" id="npcConn"></section>
         <div class="sacts">
+          <button class="btn ghost" id="npcGraphBtn" type="button">Show in graph</button>
           <button class="btn ghost" id="dupBtn" type="button">Duplicate</button>
           <button class="btn danger" id="delBtn" type="button">Delete</button>
         </div>
@@ -643,13 +659,24 @@ mark{background:color-mix(in srgb,var(--sup) 35%,transparent);color:inherit;bord
       </div>
 
       <div data-pane="more" class="inner" style="padding:0" hidden>
-        <label class="fld" for="f_relationships">Relationships<textarea id="f_relationships" rows="4" placeholder="Who they trust, fear, love or owe. One per line."></textarea></label>
+        <label class="fld" for="f_relationships">Relationships<textarea id="f_relationships" rows="4" placeholder="Who they trust, fear, love or owe. One per line. Type [[ to link another NPC by name or job, like [[Innkeeper]]."></textarea></label>
         <label class="fld" for="f_perception">What Perception reveals<textarea id="f_perception" rows="4" placeholder="Rank 1: …&#10;Rank 2: …&#10;Rank 3: …"></textarea></label>
         <label class="fld" for="f_notes">Other notes<textarea id="f_notes" rows="4"></textarea></label>
       </div>
     </div>
   </form>
 </aside>
+<!-- Help -->
+<div class="scrim" id="helpScrim" hidden></div>
+<aside class="sheet help" id="helpSheet" hidden role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="shead">
+    <button class="back" id="helpClose" type="button"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span>Close</span></button>
+    <h2 id="helpTitle">How Vael Notes works</h2>
+  </div>
+  <nav class="subtabs" id="helpTabs" role="tablist" aria-label="Help topics"></nav>
+  <div class="pane" id="helpPane"><div class="inner prose" id="helpBody"></div></div>
+</aside>
+<div class="sugg npcsugg" id="npcSugg" hidden></div>
 <datalist id="dlPlace"></datalist><datalist id="dlHome"></datalist><datalist id="dlJob"></datalist><datalist id="dlFaction"></datalist>
 
 <!-- Island plan (classic scripts, shared global scope): loaded from the database by shell.js after sign-in -->
@@ -661,7 +688,7 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 const store = { get(k){ try { return localStorage.getItem(k); } catch { return null; } }, set(k, v){ try { localStorage.setItem(k, v); } catch {} } };
 
 // ================= shell: bottom tabs + sub tabs =================
-const VIEWS = { notes: 'Design notes', npcs: 'NPC roster', island: 'Island plan' };
+const VIEWS = { notes: 'Design notes', npcs: 'NPC roster', graph: 'Notes and NPCs, linked', island: 'Island plan' };
 function showView(v){
   const note = /^n-/.test(v) ? v : '';
   if (note || !VIEWS[v]) v = 'notes';
@@ -670,6 +697,7 @@ function showView(v){
   $('where').textContent = VIEWS[v];
   const want = '#' + (note || v);
   if (location.hash !== want) try { history.replaceState(null, '', want); } catch {}
+  window.dispatchEvent(new CustomEvent('vael:view', { detail: v }));
 }
 for (const b of document.querySelectorAll('.tabbar button')) b.addEventListener('click', () => showView(b.dataset.v));
 window.addEventListener('hashchange', () => { const h = location.hash.slice(1); showView(h); if (/^n-/.test(h)) openFromHash(h.slice(2)); });
@@ -1463,7 +1491,8 @@ $('schedAdd').addEventListener('click', () => {
 $('schedRows').addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if (!b) return; const list = readSched(); list.splice(Number(b.dataset.rm), 1); drawSched(list); resetArms(); setMsg(''); });
 $('schedRows').addEventListener('input', schedChanged);
 
-let editing = null, baseline = '', saving = false, closeArmed = false, delArmed = false;
+// editing.key is the NPC's id, or "new-…" for one that hasn't been saved yet.
+let editing = null, baseline = '', saving = false, delArmed = false;
 function snapshotForm(){
   const d = {}; for (const k of TEXT) d[k] = $('f_' + k).value.trim();
   d.scheduleEntries = readSched(); d.tier = $('f_tier').value; d.status = $('f_status').value; d.src = $('f_src').value;
@@ -1478,64 +1507,203 @@ function tierHints(){
   $('traits').hidden = t === 'b'; $('tempWrap').hidden = t !== 'b';
 }
 $('f_tier').addEventListener('input', tierHints);
-function openSheet(r, isNew){
-  editing = { id: isNew ? null : r.id, created: r.createdAt || null };
+function fillForm(r){
   for (const k of TEXT) $('f_' + k).value = r[k] ?? '';
   drawSched(Array.isArray(r.scheduleEntries) ? r.scheduleEntries : []);
   $('f_tier').value = T[r.tier] ? r.tier : 's'; $('f_status').value = STATUS[r.status] ? r.status : 'todo';
   $('f_src').value = ['canon', 'new', 'mine'].includes(r.src) ? r.src : 'mine'; $('f_n').value = Number(r.n) || 1; $('f_hidden').checked = !!r.hidden;
   for (const [k] of TRAITS){ const v = r.traits && Number.isFinite(r.traits[k]) ? r.traits[k] : 50; $('t_' + k).value = v; $('o_' + k).textContent = v; }
-  tierHints(); baseline = JSON.stringify(snapshotForm());
+  tierHints();
+}
+
+// ---------- open-NPC tabs ----------
+// Each NPC you open gets a tab at the top of the sheet. Switching tabs or closing the sheet keeps unsaved changes
+// with that NPC's tab (marked with a dot, kept on this device) until you save or discard them.
+const NPC_TAB_MAX = 12;
+const readJ = (k, d) => { try { const v = JSON.parse(store.get(k) || ''); return v && typeof v === 'object' ? v : d; } catch { return d; } };
+let nTabs = readJ('vael.npcTabs', []).filter(x => typeof x === 'string'), nDrafts = new Map(Object.entries(readJ('vael.npcDrafts', {}))), ntCloseArmed = '';
+const saveNpcTabs = () => { store.set('vael.npcTabs', JSON.stringify(nTabs)); store.set('vael.npcDrafts', JSON.stringify(Object.fromEntries(nDrafts))); };
+function addNpcTab(key){
+  if (nTabs.includes(key)) return;
+  const at = editing ? nTabs.indexOf(editing.key) : -1;
+  nTabs.splice(at >= 0 ? at + 1 : nTabs.length, 0, key);
+  while (nTabs.length > NPC_TAB_MAX){ const old = nTabs.find(x => x !== key && !nDrafts.has(x)); if (!old) break; nTabs.splice(nTabs.indexOf(old), 1); }
+  saveNpcTabs();
+}
+function npcTabLabel(key){
+  const d = nDrafts.get(key), r = npcs.find(x => x.id === key), src = d ? d.data : r;
+  return src ? (src.name || src.role || 'Untitled NPC') : key.startsWith('new-') ? 'New NPC' : '';
+}
+function drawNpcStrips(){
+  if (loaded) nTabs = nTabs.filter(k => k.startsWith('new-') ? nDrafts.has(k) || (editing && editing.key === k) : npcs.some(r => r.id === k));
+  const act = editing ? editing.key : null;
+  const html = nTabs.map(k => {
+    const t = npcTabLabel(k), dot = nDrafts.has(k) || (k === act && dirty()), armed = ntCloseArmed === k;
+    return `<span class="ot${k === act ? ' on' : ''}"><button type="button" class="otl" data-nt="${esc(k)}" aria-current="${k === act}" title="${esc(t)}">${dot ? '<i class="dot" title="Unsaved changes"></i>' : ''}<span>${esc(t)}</span></button><button type="button" class="otx${armed ? ' armed' : ''}" data-ntx="${esc(k)}" aria-label="Close ${esc(t)}">${armed ? 'Discard?' : '×'}</button></span>`;
+  }).join('');
+  $('sheetStrip').innerHTML = nTabs.length > 1 || (nTabs.length && !nTabs.includes(act)) ? html : '';
+  $('npcStrip').innerHTML = html; $('npcStrip').hidden = !nTabs.length || !!editing;
+  const on = $('sheetStrip').querySelector('.ot.on'); if (on) on.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+// Keep the open sheet's unsaved changes with its tab, then clear the form.
+function parkSheet(){
+  if (!editing) return;
+  const k = editing.key;
+  if (dirty()) nDrafts.set(k, { data: snapshotForm(), id: editing.id, created: editing.created });
+  else { nDrafts.delete(k); if (k.startsWith('new-')) nTabs = nTabs.filter(x => x !== k); }
+  saveNpcTabs();
+}
+function openNpcTab(key){
+  if (document.getElementById('v-npcs').hidden) showView('npcs');
+  ntCloseArmed = '';
+  if (editing && editing.key === key){ drawNpcStrips(); return; }
+  const d = nDrafts.get(key), r = npcs.find(x => x.id === key);
+  if (!r && !d) return;
+  parkSheet();
+  openSheet(r || d.data, !r, key);
+}
+function closeNpcTab(key){
+  const act = editing ? editing.key : null, unsaved = nDrafts.has(key) || (key === act && dirty());
+  if (unsaved && ntCloseArmed !== key){ ntCloseArmed = key; drawNpcStrips(); setMsg('This tab has unsaved changes. Tap Discard? to close it and drop them.', 'err'); return; }
+  ntCloseArmed = ''; nDrafts.delete(key);
+  const i = nTabs.indexOf(key); if (i >= 0) nTabs.splice(i, 1); saveNpcTabs();
+  if (key === act){ editing = null; const next = nTabs[Math.min(i, nTabs.length - 1)]; if (next) openNpcTab(next); else closeSheet(); }
+  else { setMsg(''); drawNpcStrips(); }
+}
+for (const strip of [$('sheetStrip'), $('npcStrip')]){
+  strip.addEventListener('click', e => { const x = e.target.closest('[data-ntx]'); if (x){ closeNpcTab(x.dataset.ntx); return; } const b = e.target.closest('[data-nt]'); if (b) openNpcTab(b.dataset.nt); });
+  strip.addEventListener('auxclick', e => { const b = e.target.closest('[data-nt]'); if (e.button === 1 && b){ e.preventDefault(); closeNpcTab(b.dataset.nt); } });
+}
+
+// key: which tab this is (the id, or "new-…"). A parked draft for that tab is put back on top of the saved record.
+function openSheet(r, isNew, key){
+  key = key || (isNew ? 'new-' + Date.now().toString(36) : r.id);
+  const d = nDrafts.get(key);
+  editing = { id: isNew ? (d && d.id) || null : r.id, created: (d && d.created) || r.createdAt || null, key };
+  fillForm(r); baseline = JSON.stringify(snapshotForm());
+  if (isNew && !d) baseline = JSON.stringify(snapshotForm());
+  setMsg(''); resetArms();
+  if (d){ fillForm(d.data); nDrafts.delete(key); saveNpcTabs(); if (isNew) baseline = JSON.stringify({}); setMsg('Your unsaved changes are back. Tap Save to keep them.', ''); }
+  addNpcTab(key);
   $('dTitle').textContent = isNew ? 'New NPC' : (r.name || r.role || 'Character sheet');
-  setMsg(''); resetArms(); $('delBtn').hidden = isNew; $('dupBtn').hidden = isNew;
+  $('delBtn').hidden = !editing.id; $('dupBtn').hidden = !editing.id; $('npcGraphBtn').hidden = !editing.id;
   for (const b of [$('saveBtn'), $('delBtn'), $('dupBtn')]) b.disabled = !canWrite;
   if (!canWrite) setMsg('You can read this roster but not change it. Ask Judah to share it with you as an Editor.', '');
   sheetSub('basics');
   $('scrim').hidden = false; $('sheet').hidden = false;
+  drawNpcConn(); drawNpcStrips();
 }
-function closeSheet(){ editing = null; $('scrim').hidden = true; $('sheet').hidden = true; }
+function closeSheet(){ editing = null; $('scrim').hidden = true; $('sheet').hidden = true; npcSugg.el = null; $('npcSugg').hidden = true; drawNpcStrips(); }
 function setMsg(text, kind){ const m = $('dMsg'); m.textContent = text; m.className = 'smsg' + (kind ? ' ' + kind : ''); }
-function resetArms(){ closeArmed = false; delArmed = false; $('closeLbl').textContent = 'Close'; $('delBtn').textContent = 'Delete'; $('delBtn').classList.remove('armed'); }
-function tryClose(){
-  if (dirty() && !closeArmed){ closeArmed = true; $('closeLbl').textContent = 'Discard?'; setMsg('You have unsaved changes. Tap Discard? to close without saving, or Save.', 'err'); return; }
-  closeSheet();
-}
+function resetArms(){ delArmed = false; $('closeLbl').textContent = 'Close'; $('delBtn').textContent = 'Delete'; $('delBtn').classList.remove('armed'); }
+// Close hides the sheet; unsaved changes stay with the NPC's tab.
+function tryClose(){ parkSheet(); closeSheet(); }
 $('closeBtn').addEventListener('click', tryClose);
 $('scrim').addEventListener('click', tryClose);
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && editing) tryClose(); });
-$('form').addEventListener('input', () => { if (closeArmed){ resetArms(); setMsg(''); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && editing && $('npcSugg').hidden) tryClose(); });
+let npcStripTimer = 0;
+$('form').addEventListener('input', () => { if (ntCloseArmed){ ntCloseArmed = ''; setMsg(''); } clearTimeout(npcStripTimer); npcStripTimer = setTimeout(() => { drawNpcStrips(); drawNpcConn(); }, 300); });
 $('form').addEventListener('submit', e => { e.preventDefault(); save(); });
+document.addEventListener('keydown', e => { if (editing && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's'){ e.preventDefault(); save(); } });
 async function save(){
   if (saving || !editing || !col) return;
   const d = snapshotForm();
   if (!d.role && !d.name){ setMsg('Give the NPC a role or a name before saving.', 'err'); sheetSub('basics'); $('f_role').focus(); return; }
   d.scheduleEntries = sortSched(d.scheduleEntries);
   saving = true; $('saveBtn').disabled = true; $('saveBtn').textContent = 'Saving…';
-  const now = new Date().toISOString();
+  const now = new Date().toISOString(), oldKey = editing.key, before = editing.id ? npcs.find(x => x.id === editing.id) : null, oldKeys = editing.id ? npcKeysOf(editing.id) : [];
   try {
     const ref = editing.id ? col.doc(editing.id) : col.doc();
     await ref.set({ ...d, createdAt: editing.created || now, updatedAt: now });
-    editing.id = ref.id; editing.created = editing.created || now;
+    editing.id = ref.id; editing.created = editing.created || now; editing.key = ref.id;
+    if (oldKey !== ref.id){ const i = nTabs.indexOf(oldKey); if (i >= 0) nTabs[i] = ref.id; }
+    nDrafts.delete(oldKey); saveNpcTabs();
     drawSched(d.scheduleEntries); baseline = JSON.stringify(snapshotForm());
-    $('dTitle').textContent = d.name || d.role; $('delBtn').hidden = false; $('dupBtn').hidden = false;
-    resetArms(); setMsg('Saved.', 'ok');
+    $('dTitle').textContent = d.name || d.role; $('delBtn').hidden = false; $('dupBtn').hidden = false; $('npcGraphBtn').hidden = false;
+    resetArms();
+    const moved = before ? await relinkRenamedNpc(before, { ...before, ...d, id: ref.id }, oldKeys) : 0;
+    setMsg(moved ? `Saved. Updated the links in ${moved} note${moved === 1 ? '' : 's'} and sheet${moved === 1 ? '' : 's'}.` : 'Saved.', 'ok');
+    drawNpcStrips(); drawNpcConn();
   } catch (e) {
     if (e && e.code === 'invalid_argument'){ canWrite = false; applyWriteState(); setMsg('This roster is read-only for you, so the change was not saved.', 'err'); }
     else if (e && e.code === 'quota_exceeded') setMsg('The roster is full. Delete some NPCs and try again.', 'err');
     else setMsg('Could not save right now. Check your connection and tap Save again.', 'err');
   } finally { saving = false; $('saveBtn').textContent = 'Save'; $('saveBtn').disabled = !canWrite; }
 }
+// When an NPC's name, job or place changes, links that used the old name are pointed at the new one.
+async function relinkRenamedNpc(oldR, newR, oldKeys){
+  if (npcName(oldR) === npcName(newR) && npcRole(oldR) === npcRole(newR) && npcPlace(oldR) === npcPlace(newR)) return 0;
+  const next = npcIndex(npcs.map(x => x.id === newR.id ? newR : x)), newLabel = next.label.get(newR.id);
+  if (!newLabel) return 0;
+  let count = 0;
+  for (const k of oldKeys){
+    const hit = next.byKey.get(k); if (hit && hit.id === newR.id) continue;   // the old name still works
+    const re = linkRe(k);
+    if (notesCol) for (const o of NOTES.slice()){ const nb = o.body.replace(re, (_, rest) => '[[' + newLabel + rest + ']]'); if (nb !== o.body){ try { await notesCol.doc(o.id).update({ body: nb }); applyLocal({ id: o.id, body: nb }); count++; } catch {} } }
+    count += await relinkNpcs(re, newLabel);
+  }
+  return count;
+}
 $('saveBtn').addEventListener('click', save);
-$('dupBtn').addEventListener('click', () => { const d = snapshotForm(); openSheet({ ...d, name: '', status: 'todo', src: 'mine', role: d.role ? d.role + ' (copy)' : '' }, true); setMsg('This is an unsaved copy. Edit it and tap Save.', ''); });
+$('dupBtn').addEventListener('click', () => { const d = snapshotForm(); parkSheet(); openSheet({ ...d, name: '', status: 'todo', src: 'mine', role: d.role ? d.role + ' (copy)' : '' }, true); baseline = ''; setMsg('This is an unsaved copy. Edit it and tap Save.', ''); drawNpcStrips(); });
 $('delBtn').addEventListener('click', async () => {
   if (!editing || !editing.id || !col) return;
-  if (!delArmed){ delArmed = true; $('delBtn').textContent = 'Delete for good?'; $('delBtn').classList.add('armed'); setMsg('Tap Delete for good? to remove this NPC. This cannot be undone.', 'err'); return; }
+  if (!delArmed){
+    const back = npcKeysOf(editing.id), n = back.length ? NOTES.filter(o => !o.trashed && o.out.some(t => back.includes(t))).length + NPCX.list.filter(r => r.id !== editing.id && (NPCX.out.get(r.id) || []).some(t => back.includes(t))).length : 0;
+    delArmed = true; $('delBtn').textContent = 'Delete for good?'; $('delBtn').classList.add('armed');
+    setMsg((n ? `${n} note${n === 1 ? ' or sheet links' : 's or sheets link'} to this NPC, and those links will show as missing. ` : '') + 'Tap Delete for good? to remove this NPC. This cannot be undone.', 'err'); return;
+  }
   $('delBtn').disabled = true;
-  try { await col.doc(editing.id).delete(); closeSheet(); } catch { setMsg('Could not delete right now. Try again.', 'err'); $('delBtn').disabled = false; resetArms(); }
+  try { const key = editing.key; await col.doc(editing.id).delete(); editing = null; closeNpcTab(key); if (!editing) closeSheet(); }
+  catch { setMsg('Could not delete right now. Try again.', 'err'); $('delBtn').disabled = false; resetArms(); }
 });
-$('addBtn').addEventListener('click', () => openSheet({ tier: 's', n: 1, status: 'todo', src: 'mine', place: $('fPlace').value || keyPlace, job: $('fJob').value }, true));
-$('v-npcs').addEventListener('click', e => { const b = e.target.closest('[data-id]'); if (!b) return; const r = npcs.find(x => x.id === b.dataset.id); if (r) openSheet(r, false); });
+$('addBtn').addEventListener('click', () => { parkSheet(); openSheet({ tier: 's', n: 1, status: 'todo', src: 'mine', place: $('fPlace').value || keyPlace, job: $('fJob').value }, true); });
+$('v-npcs').addEventListener('click', e => { if (e.target.closest('.otabs')) return; const b = e.target.closest('[data-id]'); if (!b) return; const r = npcs.find(x => x.id === b.dataset.id); if (r) openNpcTab(r.id); });
 function applyWriteState(){ $('addBtn').hidden = !canWrite; if (editing) for (const b of [$('saveBtn'), $('delBtn'), $('dupBtn')]) b.disabled = !canWrite; }
+
+// ---------- links on the sheet ----------
+// Type [[ in any text box on the sheet to link another NPC (by name, or by job) or a note.
+const npcSugg = makeSugg($('npcSugg'), { active: () => !!editing, exclude: () => ({ npcId: editing && editing.id, prefer: 'npc' }), changed: () => $('form').dispatchEvent(new Event('input')) });
+$('form').addEventListener('focusin', e => {
+  const el = e.target.closest('textarea'); if (!el) return;
+  npcSugg.el = el; const wrap = el.closest('label') || el; if (wrap.nextElementSibling !== $('npcSugg')) wrap.after($('npcSugg')); npcSugg.draw();
+});
+for (const ev of ['input', 'click', 'keyup']) $('form').addEventListener(ev, e => { if (e.target === npcSugg.el && (ev !== 'keyup' || /^(Arrow|Home|End)/.test(e.key || ''))) npcSugg.draw(); });
+$('form').addEventListener('focusout', e => { if (e.target === npcSugg.el) setTimeout(() => { if (document.activeElement !== npcSugg.el) $('npcSugg').hidden = true; }, 150); });
+$('form').addEventListener('keydown', e => {
+  if (e.target !== npcSugg.el || $('npcSugg').hidden) return;
+  if (e.key === 'Escape'){ $('npcSugg').hidden = true; e.stopPropagation(); e.preventDefault(); }
+  else if (e.key === 'Enter' && npcSugg.first && npcSugg.ctx){ e.preventDefault(); npcSugg.pick(npcSugg.first); }
+});
+// Connections: who this NPC links to, and which NPCs and notes mention them.
+function drawNpcConn(){
+  if (!editing) return;
+  const d = snapshotForm(), seen = new Set(), outs = [];
+  for (const t of linksIn(npcText(d))){ const k = t.toLowerCase(); if (!seen.has(k)){ seen.add(k); outs.push(t); } }
+  const keys = editing.id ? npcKeysOf(editing.id) : [];
+  const fromNpcs = keys.length ? NPCX.list.filter(r => r.id !== editing.id && (NPCX.out.get(r.id) || []).some(t => keys.includes(t))) : [];
+  const fromNotes = keys.length ? liveNotes().filter(o => o.out.some(t => keys.includes(t))) : [];
+  const chips = outs.map(linkChip).join('');
+  const back = fromNpcs.map(r => linkChip(npcLinkName(r))).join('') + fromNotes.map(o => linkChip(o.title)).join('');
+  const how = editing.id ? `Link to this NPC from a note or another sheet with <code>${esc('[[' + (NPCX.label.get(editing.id) || d.name || d.role) + ']]')}</code>.` : 'Save this NPC first, then other notes and sheets can link to it.';
+  $('npcConn').innerHTML = `<p class="label">Connections</p>`
+    + (chips ? `<p class="sub">Links to</p><div class="chips">${chips}</div>` : '')
+    + (back ? `<p class="sub">Mentioned by</p><div class="chips">${back}</div>` : '')
+    + (!chips && !back ? '<p class="sub">No links yet.</p>' : '')
+    + `<p class="hint">${how}</p>`
+    + (canWrite ? '<div><button type="button" class="btn ghost" id="npcLinkBtn">Link an NPC or note</button></div>' : '');
+}
+$('npcConn').addEventListener('click', e => {
+  if (e.target.closest('#npcLinkBtn')){
+    sheetSub('more'); const el = $('f_relationships'), v = el.value;
+    const add = (v && !v.endsWith('\n') ? '\n' : '') + '[[';
+    el.focus(); replaceIn(el, v.length, v.length, add, v.length + add.length); npcSugg.el = el; el.closest('label').after($('npcSugg')); npcSugg.draw(); return;
+  }
+  const p = e.target.closest('[data-npc]'); if (p){ openNpcTab(p.dataset.npc); return; }
+  const w = e.target.closest('[data-wl]'); if (w){ const t = w.dataset.wl; if (!resolveLink(t)) return; parkSheet(); closeSheet(); showView('notes'); followLink(t); }
+});
+$('npcGraphBtn').addEventListener('click', () => { if (!editing || !editing.id) return; const id = editing.id; parkSheet(); closeSheet(); showInGraph('p:' + id); });
+
 
 renderNpcs();
 (async () => {
@@ -1547,11 +1715,13 @@ renderNpcs();
   col = db.collection('npcs');
   const timer = setTimeout(() => { $('notice').hidden = false; $('notice').textContent = loaded ? 'The roster may be out of date. Still trying to reach it…' : 'The roster can\'t be reached yet. Still trying…'; }, 10000);
   col.onSnapshot(snap => {
-    npcs = snap.docs.map(d => ({ id: d.id, ...d.data() })); loaded = true;
+    npcs = snap.docs.map(d => ({ id: d.id, ...d.data() })); loaded = true; setNpcIndex(npcs);
     if (!snap.metadata.fromCache) clearTimeout(timer);
     if (npcs.length) $('notice').hidden = true;
     else { $('notice').hidden = false; $('notice').textContent = canWrite ? 'The roster is empty. Tap Add NPC to create the first one.' : 'The roster is empty.'; }
-    renderNpcs();
+    renderNpcs(); drawNpcStrips(); graphChanged();
+    if (editing) drawNpcConn();
+    if (current && !$('reader').hidden && !nEdit){ const n = byId.get(current); if (n) showNote(n, true); }
   }, () => { clearTimeout(timer); $('notice').hidden = false; $('notice').textContent = 'The roster could not be loaded. Reload the page to try again.'; });
 })();
 </script>

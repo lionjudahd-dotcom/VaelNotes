@@ -69,7 +69,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .topbar .act{flex:none}
 .views{flex:1;min-height:0;position:relative}
 .view{position:absolute;inset:0;display:flex;flex-direction:column}
-.tabbar{flex:none;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--rule);background:var(--panel);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+.tabbar{flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--rule);background:var(--panel);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 .tabbar button{background:none;border:0;min-height:var(--tabbar);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;color:var(--muted);letter-spacing:.03em}
 .tabbar svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .tabbar button[aria-selected="true"]{color:var(--ink);font-weight:700}
@@ -174,11 +174,54 @@ input.ed-title{font-family:var(--f-display);font-size:24px;line-height:1.15}
 .edbar{position:sticky;top:0;z-index:2;background:var(--bg);padding:8px 0;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--rule)}
 .edtools{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
 .edtools::-webkit-scrollbar{display:none}
-.edtools button{flex:none;min-width:42px;height:40px;border:1px solid var(--rule);background:var(--panel);border-radius:7px;font-size:15px;font-weight:700;padding:0 11px;white-space:nowrap}
+.edtools{align-items:center;flex-wrap:wrap;overflow:visible}
+textarea.ed-body,input.ed-title{font-weight:400;letter-spacing:0}
+.edtools button{flex:none;min-width:40px;height:40px;border:1px solid var(--rule);background:var(--panel);border-radius:7px;font-size:15px;font-weight:700;padding:0 10px;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:5px}
+.edtools button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.edtools button svg circle{fill:currentColor;stroke:none}
+.edtools button svg text{fill:currentColor;stroke:none;font-family:var(--f-ui);font-weight:700}
 .edtools button.link{border-color:var(--key);color:var(--key)}
 .edtools button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.edtools button:disabled{opacity:.4}
-.edtools .sp{flex:1}
+.edtools button:disabled,.edtools select:disabled{opacity:.4}
+.edtools select{flex:none;width:auto;height:40px;padding:0 8px;font-size:15px;font-weight:700}
+.edtools .div{flex:none;width:1px;align-self:stretch;margin:6px 2px;background:var(--rule)}
+.edtools .sp{flex:1;min-width:6px}
+.edtools .wp{flex:none;display:flex;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.edtools .wp button{border:0;border-radius:0;height:38px;font-weight:600;color:var(--muted)}
+.edtools .wp button+button{border-left:1px solid var(--rule)}
+.edtools .wp button[aria-pressed="true"]{color:var(--bg)}
+.edtools .helpq{border-radius:50%;width:40px;padding:0;color:var(--muted)}
+.sempty{padding:10px 12px;font-size:14px;color:var(--muted)}
+.npcdot,.chipbtn.npc i{display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--npc);margin-right:7px;vertical-align:0}
+.prose a.wl.npc{color:var(--npc);text-decoration-color:color-mix(in srgb,var(--npc) 45%,transparent)}
+/* tabs for open notes and NPCs */
+.nbody{flex:1;min-height:0;position:relative;display:flex;flex-direction:column}
+.otabs{flex:none;display:flex;align-items:stretch;gap:4px;overflow-x:auto;scrollbar-width:none;padding:6px max(10px,env(safe-area-inset-right,0px)) 0 max(10px,env(safe-area-inset-left,0px));background:var(--chip);border-bottom:1px solid var(--rule)}
+.otabs::-webkit-scrollbar{display:none}
+.otabs .ot{flex:none;display:flex;align-items:center;max-width:220px;border:1px solid var(--rule);border-bottom:0;border-radius:8px 8px 0 0;background:color-mix(in srgb,var(--panel) 55%,var(--chip));margin-bottom:-1px}
+.otabs .ot.on{background:var(--bg);box-shadow:inset 0 2px 0 var(--key)}
+.otabs .ot.home{gap:6px;padding:0 12px;min-height:38px;font-size:14px;color:var(--muted);cursor:pointer}
+.otabs .ot.home[aria-current="true"]{background:var(--bg);color:var(--ink);font-weight:700;box-shadow:inset 0 2px 0 var(--key)}
+.otabs .ot.home svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+.otabs .otl{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:6px;min-width:0;padding:8px 4px 8px 12px;min-height:38px;font-size:14px}
+.otabs .otl span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.otabs .ot.on .otl{font-weight:700}
+.otabs .otl:focus-visible,.otabs .otx:focus-visible{outline:2px solid var(--key);outline-offset:-2px}
+.otabs .otx{flex:none;background:none;border:0;border-radius:6px;width:30px;height:30px;margin-right:4px;font-size:18px;line-height:1;color:var(--muted)}
+.otabs .otx:hover{background:var(--chip);color:var(--ink)}
+.otabs .otx.armed{width:auto;padding:0 8px;font-size:13px;font-weight:700;color:var(--panel);background:var(--key)}
+.otabs .dot,.dotk{display:inline-block;flex:none;width:8px;height:8px;border-radius:50%;background:var(--sup)}
+#sheetStrip:empty{display:none}
+/* help */
+.sheet.help{width:min(760px,100%)}
+#helpBody h3{font-family:var(--f-ui);font-size:18px;margin:1.2em 0 .4em}
+.hx td{vertical-align:top}
+.hx td:first-child{width:46%}
+.hx td:first-child code{display:block;white-space:pre-wrap;background:none;padding:0;font-size:13.5px;line-height:1.5}
+.hx td small{display:block;margin-top:4px;color:var(--muted);font-family:var(--f-ui);font-size:12.5px}
+.hx td.prose{font-size:15.5px}
+.hx td.prose>*:last-child{margin-bottom:0}
+.hx td.prose h2,.hx td.prose h3{margin:0}
 .sugg{display:flex;flex-direction:column;border:1px solid var(--key);border-radius:8px;background:var(--panel);max-height:236px;overflow-y:auto}
 .sugg button{all:unset;box-sizing:border-box;display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:10px 12px;border-bottom:1px solid var(--rule);cursor:pointer;font-size:15.5px;min-height:44px}
 .sugg button:last-child{border-bottom:0}
@@ -231,9 +274,9 @@ textarea.zc-in{font-family:var(--f-mono);font-size:16px;line-height:1.5;min-heig
 .zc-chips .x{background:color-mix(in srgb,var(--key) 14%,transparent);border-color:transparent}
 .zc-chips .x i{color:var(--key)}
 /* graph: one colour per note group */
-:root{--g0:#B23A2B;--g1:#2F6F8F;--g2:#8A6A1E;--g3:#6B4E8C;--g4:#3F7A4E;--g5:#7A5A44;--g6:#7B848A}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--g0:#F08A6C;--g1:#6FB4D6;--g2:#D9B45A;--g3:#B49AD8;--g4:#7FC08E;--g5:#C9A283;--g6:#9AA3A8}}
-:root[data-theme="dark"]{--g0:#F08A6C;--g1:#6FB4D6;--g2:#D9B45A;--g3:#B49AD8;--g4:#7FC08E;--g5:#C9A283;--g6:#9AA3A8}
+:root{--g0:#B23A2B;--g1:#2F6F8F;--g2:#8A6A1E;--g3:#6B4E8C;--g4:#3F7A4E;--g5:#7A5A44;--g6:#7B848A;--npc:#B5487F}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--g0:#F08A6C;--g1:#6FB4D6;--g2:#D9B45A;--g3:#B49AD8;--g4:#7FC08E;--g5:#C9A283;--g6:#9AA3A8;--npc:#EB94C0}}
+:root[data-theme="dark"]{--g0:#F08A6C;--g1:#6FB4D6;--g2:#D9B45A;--g3:#B49AD8;--g4:#7FC08E;--g5:#C9A283;--g6:#9AA3A8;--npc:#EB94C0}
 .graph{flex:1;min-height:0;position:relative;background:var(--bg);overflow:hidden}
 #graphCv{display:block;width:100%;height:100%;touch-action:none;cursor:grab;outline:none}
 .glegend{position:absolute;top:0;left:0;right:0;display:flex;gap:14px;overflow-x:auto;scrollbar-width:none;padding:9px max(16px,env(safe-area-inset-right,0px)) 9px max(16px,env(safe-area-inset-left,0px));font-size:13px;color:var(--muted);background:color-mix(in srgb,var(--bg) 88%,transparent);border-bottom:1px solid var(--rule)}
@@ -241,7 +284,15 @@ textarea.zc-in{font-family:var(--f-mono);font-size:16px;line-height:1.5;min-heig
 .glegend span{display:flex;align-items:center;gap:6px;white-space:nowrap}
 .glegend i{flex:none;width:10px;height:10px;border-radius:50%}
 .glegend i.un{border:1.5px dashed var(--muted)}
-.gfit{position:absolute;top:50px;right:max(12px,env(safe-area-inset-right,0px));font-size:13.5px;background:var(--panel);border:1px solid var(--rule);border-radius:7px;padding:7px 12px;min-height:36px;box-shadow:0 1px 3px var(--shadow)}
+.glegend i.sq{border-radius:2px;background:var(--npc)}
+.glegend{flex-direction:column;gap:7px}
+.glegend .gtogs,.glegend .gkey{display:flex;gap:14px;flex:none}
+.glegend .gtogs{gap:6px}
+.gtog{border:1px solid var(--rule);background:var(--panel);border-radius:999px;padding:4px 12px;font-size:13.5px;color:var(--muted);white-space:nowrap}
+.gtog[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.gtog[aria-pressed="true"]::before{content:"✓ "}
+.gbtns{position:absolute;top:88px;right:max(12px,env(safe-area-inset-right,0px));display:flex;gap:6px}
+.gbtns button{font-size:13.5px;background:var(--panel);border:1px solid var(--rule);border-radius:7px;padding:7px 12px;min-height:36px;box-shadow:0 1px 3px var(--shadow)}
 .gsel{position:absolute;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:12px;display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--panel);border:1px solid var(--rule);border-radius:10px;box-shadow:0 4px 14px var(--shadow)}
 .gsel div{flex:1;min-width:0;display:flex;flex-direction:column}
 .gsel b{font-size:16px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -414,11 +465,14 @@ textarea.zc-in{font-family:var(--f-mono);font-size:16px;line-height:1.5;min-heig
     <span class="brand">Vael Awakening</span>
     <span class="where" id="where">Design notes</span>
     <button class="iconbtn" id="settingsBtn" type="button" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+    <button class="iconbtn" id="helpBtn" type="button" aria-label="Help: how this app works" title="How this app works"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.8"/><circle cx="12" cy="17.2" r=".6"/></svg></button>
   </header>
 
   <div class="views">
     <!-- NOTES -->
     <section class="view" id="v-notes" aria-label="Notes">
+      <nav class="otabs" id="noteStrip" aria-label="Open notes" hidden></nav>
+      <div class="nbody">
       <nav class="subtabs" id="noteTabs" role="tablist" aria-label="Note groups"></nav>
       <div class="pane" id="notesPane">
         <div class="inner">
@@ -428,12 +482,6 @@ textarea.zc-in{font-family:var(--f-mono);font-size:16px;line-height:1.5;min-heig
           <p class="sub" id="notesStamp"></p>
           <div style="height:64px" aria-hidden="true"></div>
         </div>
-      </div>
-      <div class="graph" id="graphView" hidden>
-        <canvas id="graphCv" aria-label="Graph of the notes and the links between them. The same connections are listed at the bottom of each note."></canvas>
-        <div class="glegend" id="graphLegend"></div>
-        <button type="button" class="gfit" id="graphFit">Fit all</button>
-        <div class="gsel idle" id="graphSel"><div><b id="gselTitle"></b><span id="gselMeta"></span></div><button type="button" class="btn" id="gselOpen" hidden>Open</button></div>
       </div>
       <button class="btn fab" id="newNoteBtn" type="button" hidden><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New note</button>
       <div class="reader" id="reader" hidden>
@@ -448,23 +496,41 @@ textarea.zc-in{font-family:var(--f-mono);font-size:16px;line-height:1.5;min-heig
           <div class="inner" id="readerBody"></div>
           <form class="inner editor" id="editor" hidden autocomplete="off">
             <label class="fld" for="edTitle">Title<input type="text" id="edTitle" class="ed-title" placeholder="Note title"></label>
-            <label class="fld" for="edFolder">Section<select id="edFolder"></select></label>
+            <div class="grid2">
+              <label class="fld" for="edFolder">Section<select id="edFolder"></select></label>
+              <label class="fld" for="edStatus">Status<select id="edStatus"></select></label>
+            </div>
             <div class="edbar">
               <div class="edtools" role="toolbar" aria-label="Formatting">
-                <button type="button" class="link" data-fmt="link" aria-label="Link to another note">[[ Link</button>
-                <button type="button" data-fmt="h" aria-label="Heading">H</button>
-                <button type="button" data-fmt="b" aria-label="Bold"><b>B</b></button>
-                <button type="button" data-fmt="i" aria-label="Italic"><i>I</i></button>
-                <button type="button" data-fmt="ul" aria-label="Bullet list">List</button>
-                <button type="button" data-fmt="task" aria-label="Checkbox item">Task</button>
+                <select id="edStyle" aria-label="Line style" title="What the current line is: normal text, a section, a heading or a quote">
+                  <option value="p">Text</option>
+                  <option value="h2">Section</option>
+                  <option value="h3">Heading</option>
+                  <option value="q">Quote</option>
+                </select>
+                <button type="button" data-fmt="b" title="Bold (Ctrl+B)" aria-label="Bold"><b>B</b></button>
+                <button type="button" data-fmt="i" title="Italic (Ctrl+I)" aria-label="Italic"><i>I</i></button>
+                <span class="div" aria-hidden="true"></span>
+                <button type="button" data-fmt="ul" title="Bullet list" aria-label="Bullet list"><svg viewBox="0 0 24 24"><circle cx="5" cy="7" r="1.4"/><circle cx="5" cy="12" r="1.4"/><circle cx="5" cy="17" r="1.4"/><path d="M10 7h10M10 12h10M10 17h10"/></svg></button>
+                <button type="button" data-fmt="ol" title="Numbered list" aria-label="Numbered list"><svg viewBox="0 0 24 24"><path d="M10 7h10M10 12h10M10 17h10"/><text x="2.5" y="9" font-size="6.5">1</text><text x="2.5" y="14" font-size="6.5">2</text><text x="2.5" y="19" font-size="6.5">3</text></svg></button>
+                <button type="button" data-fmt="task" title="Checklist: a box you can tick" aria-label="Checklist"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="6" height="6" rx="1"/><path d="M4.5 8l1.3 1.3L8 6.8"/><rect x="3" y="14" width="6" height="6" rx="1"/><path d="M12 8h9M12 17h9"/></svg></button>
+                <button type="button" data-fmt="table" title="Add a table" aria-label="Add a table"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3 10h18M3 14.5h18M10 5v14"/></svg></button>
+                <span class="div" aria-hidden="true"></span>
+                <button type="button" class="link" data-fmt="link" title="Link a note or an NPC (Ctrl+K)" aria-label="Link a note or an NPC"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>Link</button>
+                <span class="div" aria-hidden="true"></span>
+                <button type="button" data-fmt="undo" title="Undo (Ctrl+Z)" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
+                <button type="button" data-fmt="redo" title="Redo (Ctrl+Y)" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button>
                 <span class="sp"></span>
-                <button type="button" id="prevBtn" aria-pressed="false">Preview</button>
+                <div class="wp" role="group" aria-label="Write or preview">
+                  <button type="button" id="writeBtn" aria-pressed="true">Write</button>
+                  <button type="button" id="prevBtn" aria-pressed="false">Preview</button>
+                </div>
+                <button type="button" class="helpq" data-help="writing" title="How formatting works" aria-label="How formatting works">?</button>
               </div>
               <div class="sugg" id="sugg" hidden></div>
             </div>
-            <label class="fld" for="edBody" id="edBodyWrap"><span class="vh">Note text</span><textarea id="edBody" class="ed-body" spellcheck="true" placeholder="Write here. Type [[ to link another note."></textarea></label>
+            <label class="fld" for="edBody" id="edBodyWrap"><span class="vh">Note text</span><textarea id="edBody" class="ed-body" spellcheck="true" placeholder="Write here. Pick Section in the first box for a heading that folds, and tap Link to connect another note or an NPC."></textarea></label>
             <div class="prose" id="edPreview" hidden></div>
-            <p class="hint">Type <code>[[</code> or tap <b>[[ Link</b> to connect another note. You can link a note that doesn't exist yet: the link shows dashed, and tapping it later creates that note.</p>
             <div class="sacts">
               <button class="btn ghost" id="histBtn" type="button">History</button>
               <button class="btn danger" id="trashBtn" type="button">Move to trash</button>
@@ -473,10 +539,12 @@ textarea.zc-in{font-family:var(--f-mono);font-size:16px;line-height:1.5;min-heig
           </form>
         </div>
       </div>
+      </div>
     </section>
 
     <!-- NPCS -->
     <section class="view" id="v-npcs" aria-label="NPCs" hidden>
+      <nav class="otabs" id="npcStrip" aria-label="Open NPCs" hidden></nav>
       <nav class="subtabs" id="npcTabs" role="tablist" aria-label="NPC sections">
         <button type="button" role="tab" data-p="overview">Overview</button>
         <button type="button" role="tab" data-p="key">Write first</button>
@@ -532,6 +600,16 @@ textarea.zc-in{font-family:var(--f-mono);font-size:16px;line-height:1.5;min-heig
         </div>
       </div>
       <button class="btn fab" id="addBtn" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add NPC</button>
+    </section>
+
+    <!-- GRAPH -->
+    <section class="view" id="v-graph" aria-label="Graph" hidden>
+      <div class="graph" id="graphView">
+        <canvas id="graphCv" aria-label="Graph of the notes, the NPCs and the links between them. The same connections are listed at the bottom of each note and on each NPC sheet."></canvas>
+        <div class="glegend" id="graphLegend"></div>
+        <div class="gbtns"><button type="button" id="graphFit">Fit all</button></div>
+        <div class="gsel idle" id="graphSel"><div><b id="gselTitle"></b><span id="gselMeta"></span></div><button type="button" class="btn" id="gselOpen" hidden>Open</button></div>
+      </div>
     </section>
 
     <!-- ISLAND -->
@@ -596,6 +674,7 @@ textarea.zc-in{font-family:var(--f-mono);font-size:16px;line-height:1.5;min-heig
   <nav class="tabbar" role="tablist" aria-label="Sections">
     <button type="button" role="tab" data-v="notes" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M5 4h10l4 4v12H5z"/><path d="M9 11h6M9 15h6"/></svg>Notes</button>
     <button type="button" role="tab" data-v="npcs" aria-selected="false"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.8-3.2 3-5 5.5-5s4.7 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c2.4-.3 4.3 1.2 5 4.3"/></svg>NPCs</button>
+    <button type="button" role="tab" data-v="graph" aria-selected="false"><svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.4"/><circle cx="18" cy="6" r="2"/><circle cx="12" cy="17" r="2.8"/><circle cx="19.5" cy="16" r="1.6"/><path d="M8 8.2l2.6 6.4M16.2 7l-3 7.6M8.3 6.7l7.7-.6M14.8 16.6l3.2-.4"/></svg>Graph</button>
     <button type="button" role="tab" data-v="island" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M4 16c2-6 5-10 8-10s6 4 8 10"/><path d="M3 19c3-1.5 6-1.5 9 0s6 1.5 9 0"/></svg>Island</button>
   </nav>
 </div>
@@ -608,6 +687,7 @@ textarea.zc-in{font-family:var(--f-mono);font-size:16px;line-height:1.5;min-heig
     <h2 id="dTitle">Character sheet</h2>
     <button class="btn" id="saveBtn" type="button">Save</button>
   </div>
+  <nav class="otabs" id="sheetStrip" aria-label="Open NPCs"></nav>
   <nav class="subtabs" id="sheetTabs" role="tablist" aria-label="Sheet sections">
     <button type="button" role="tab" data-p="basics">Basics</button>
     <button type="button" role="tab" data-p="look">Description</button>
@@ -635,7 +715,9 @@ textarea.zc-in{font-family:var(--f-mono);font-size:16px;line-height:1.5;min-heig
           <label class="fld" for="f_job">Job section<input type="text" id="f_job" list="dlJob"></label>
           <label class="fld" for="f_faction">Faction<input type="text" id="f_faction" list="dlFaction"></label>
         </div>
+        <section class="conn" id="npcConn"></section>
         <div class="sacts">
+          <button class="btn ghost" id="npcGraphBtn" type="button">Show in graph</button>
           <button class="btn ghost" id="dupBtn" type="button">Duplicate</button>
           <button class="btn danger" id="delBtn" type="button">Delete</button>
         </div>
@@ -692,13 +774,24 @@ textarea.zc-in{font-family:var(--f-mono);font-size:16px;line-height:1.5;min-heig
       </div>
 
       <div data-pane="more" class="inner" style="padding:0" hidden>
-        <label class="fld" for="f_relationships">Relationships<textarea id="f_relationships" rows="4" placeholder="Who they trust, fear, love or owe. One per line."></textarea></label>
+        <label class="fld" for="f_relationships">Relationships<textarea id="f_relationships" rows="4" placeholder="Who they trust, fear, love or owe. One per line. Type [[ to link another NPC by name or job, like [[Innkeeper]]."></textarea></label>
         <label class="fld" for="f_perception">What Perception reveals<textarea id="f_perception" rows="4" placeholder="Rank 1: …&#10;Rank 2: …&#10;Rank 3: …"></textarea></label>
         <label class="fld" for="f_notes">Other notes<textarea id="f_notes" rows="4"></textarea></label>
       </div>
     </div>
   </form>
 </aside>
+<!-- Help -->
+<div class="scrim" id="helpScrim" hidden></div>
+<aside class="sheet help" id="helpSheet" hidden role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="shead">
+    <button class="back" id="helpClose" type="button"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span>Close</span></button>
+    <h2 id="helpTitle">How Vael Notes works</h2>
+  </div>
+  <nav class="subtabs" id="helpTabs" role="tablist" aria-label="Help topics"></nav>
+  <div class="pane" id="helpPane"><div class="inner prose" id="helpBody"></div></div>
+</aside>
+<div class="sugg npcsugg" id="npcSugg" hidden></div>
 <datalist id="dlPlace"></datalist><datalist id="dlHome"></datalist><datalist id="dlJob"></datalist><datalist id="dlFaction"></datalist>
 
 <script src="config.js"></script>
@@ -713,7 +806,7 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 const store = { get(k){ try { return localStorage.getItem(k); } catch { return null; } }, set(k, v){ try { localStorage.setItem(k, v); } catch {} } };
 
 // ================= shell: bottom tabs + sub tabs =================
-const VIEWS = { notes: 'Design notes', npcs: 'NPC roster', island: 'Island plan' };
+const VIEWS = { notes: 'Design notes', npcs: 'NPC roster', graph: 'Notes and NPCs, linked', island: 'Island plan' };
 function showView(v){
   const note = /^n-/.test(v) ? v : '';
   if (note || !VIEWS[v]) v = 'notes';
@@ -722,6 +815,7 @@ function showView(v){
   $('where').textContent = VIEWS[v];
   const want = '#' + (note || v);
   if (location.hash !== want) try { history.replaceState(null, '', want); } catch {}
+  window.dispatchEvent(new CustomEvent('vael:view', { detail: v }));
 }
 for (const b of document.querySelectorAll('.tabbar button')) b.addEventListener('click', () => showView(b.dataset.v));
 window.addEventListener('hashchange', () => { const h = location.hash.slice(1); showView(h); if (/^n-/.test(h)) openFromHash(h.slice(2)); });
@@ -802,27 +896,67 @@ function setNotes(raw){
 // Show our own write straight away, without waiting for the store to echo it.
 function applyLocal(doc){ const i = rawNotes.findIndex(n => n.id === doc.id); const next = rawNotes.slice(); if (i >= 0) next[i] = { ...rawNotes[i], ...doc }; else next.push(doc); setNotes(next); }
 function refreshLists(){
-  noteTabs(); drawNoteList();
+  noteTabs(); drawNoteList(); drawNoteStrip();
   const n = liveNotes().length;
   $('notesStamp').textContent = !notesLoaded ? '' : notesReadOnly ? `${n} notes. You can read these notes but not change them.` : `${n} notes. Changes save for everyone on the team.`;
-  applyGroupView();
+  $('newNoteBtn').hidden = !notesLoaded || notesReadOnly || !notesCol;
+  graphChanged();
 }
+
+// ---------- links to NPCs ----------
+// [[Name]] links an NPC by name. An NPC without a name is linked by its job, [[Innkeeper]], and when several NPCs
+// share a name or a job the place goes in brackets: [[Guard (Port Town)]]. A note with the same title always wins.
+// The roster code keeps this index up to date (setNpcIndex).
+const NPCX = { list: [], byKey: new Map(), byId: new Map(), label: new Map(), out: new Map() };
+const npcName = r => String(r.name || '').trim(), npcRole = r => String(r.role || '').trim(), npcPlace = r => String(r.place || '').trim();
+const NPC_LINK_SKIP = new Set(['name', 'role', 'place', 'home', 'job', 'faction', 'race', 'age', 'gender', 'tier', 'status', 'src', 'createdAt', 'updatedAt']);
+// All the free text on an NPC sheet, where [[links]] can be written.
+const npcText = r => Object.entries(r).filter(([k, v]) => typeof v === 'string' && !NPC_LINK_SKIP.has(k)).map(([, v]) => v).join('\n');
+function npcIndex(list){
+  const names = new Map(), roles = new Map(), bump = (m, k) => { if (k) m.set(k.toLowerCase(), (m.get(k.toLowerCase()) || 0) + 1); };
+  for (const r of list){ bump(names, npcName(r)); bump(roles, npcRole(r)); }
+  const byKey = new Map(), label = new Map(), put = (k, r) => { k = k.toLowerCase(); if (k && !byKey.has(k)) byKey.set(k, r); };
+  for (const r of list){
+    const nm = npcName(r), ro = npcRole(r), pl = npcPlace(r);
+    if (nm && names.get(nm.toLowerCase()) === 1 && !roles.has(nm.toLowerCase())){ put(nm, r); label.set(r.id, nm); }
+    if (ro && roles.get(ro.toLowerCase()) === 1 && !names.has(ro.toLowerCase())){ put(ro, r); if (!label.has(r.id)) label.set(r.id, ro); }
+    if (pl){ if (nm){ put(`${nm} (${pl})`, r); if (!label.has(r.id)) label.set(r.id, `${nm} (${pl})`); } if (ro){ put(`${ro} (${pl})`, r); if (!label.has(r.id)) label.set(r.id, `${ro} (${pl})`); } }
+    if (!label.has(r.id)) label.set(r.id, nm || ro);
+  }
+  return { byKey, label };
+}
+function setNpcIndex(list){
+  const { byKey, label } = npcIndex(list);
+  NPCX.list = list; NPCX.byKey = byKey; NPCX.label = label; NPCX.byId = new Map(list.map(r => [r.id, r]));
+  NPCX.out = new Map(list.map(r => [r.id, [...new Set(linksIn(npcText(r)).map(s => s.toLowerCase()))]]));
+}
+const npcLinkName = r => NPCX.label.get(r.id) || npcName(r) || npcRole(r) || 'Unnamed NPC';
+// Shown on chips, tabs and the graph: the name, or for an unnamed NPC the link name ("Guard (Port Town)" when there are several).
+const npcShown = r => npcName(r) || npcLinkName(r);
+// What a [[link]] points at: { note } or { npc }, or null when nothing has that name yet.
+function resolveLink(t){
+  const k = String(t).trim().toLowerCase(), n = byTitle.get(k);
+  if (n) return { note: n };
+  const r = NPCX.byKey.get(k);
+  return r ? { npc: r } : null;
+}
+// The link names that point at an NPC (its name, its job, "job (place)").
+const npcKeysOf = id => [...NPCX.byKey.entries()].filter(([, r]) => r.id === id).map(([k]) => k);
 
 // ---------- list ----------
 function noteTabs(){
   const live = liveNotes(), trash = NOTES.length - live.length;
-  if (group === 'trash' && !trash) group = 'canon';
+  if ((group === 'trash' && !trash) || group === 'graph') group = 'canon';
   const btn = (id, name, n) => `<button type="button" role="tab" data-g="${id}" aria-selected="${id === group}">${name}${n === '' ? '' : `<span class="n">${n}</span>`}</button>`;
-  $('noteTabs').innerHTML = btn('recent', 'Recent', '') + btn('graph', 'Graph', '') + GROUPS.map(g => btn(g.id, g.name, live.filter(n => groupOf(n) === g).length)).join('') + (trash ? btn('trash', 'Trash', trash) : '');
+  $('noteTabs').innerHTML = btn('recent', 'Recent', '') + GROUPS.map(g => btn(g.id, g.name, live.filter(n => groupOf(n) === g).length)).join('') + (trash ? btn('trash', 'Trash', trash) : '');
 }
-$('noteTabs').addEventListener('click', e => { const b = e.target.closest('button[data-g]'); if (!b) return; group = b.dataset.g; store.set('vael.noteGroup', group); $('noteSearch').value = ''; noteTabs(); drawNoteList(); applyGroupView(); $('notesPane').scrollTop = 0; });
+$('noteTabs').addEventListener('click', e => { const b = e.target.closest('button[data-g]'); if (!b) return; group = b.dataset.g; store.set('vael.noteGroup', group); $('noteSearch').value = ''; noteTabs(); drawNoteList(); $('notesPane').scrollTop = 0; });
 
 function rowFor(n, snippet){
   const st = n.status;
   return `<button type="button" class="row" data-nid="${esc(n.id)}"><span class="t">${esc(n.title)}</span><span class="r">${st.label ? `<span class="pill ${st.cls}">${esc(st.label)}</span>` : ''}<span class="chev" aria-hidden="true">›</span></span><span class="s">${snippet ?? esc(n.summary)}</span></button>`;
 }
 function drawNoteList(){
-  if (group === 'graph') return;
   const empty = t => `<div class="row"><span class="t muted">${t}</span></div>`;
   if (!notesLoaded){ $('noteList').innerHTML = empty('Loading notes…'); return; }
   const q = $('noteSearch').value.trim().toLowerCase(), live = liveNotes();
@@ -877,7 +1011,10 @@ if (window.marked) window.marked.use({ renderer: {
     href = String(href || '');
     if (href.startsWith('#wl:')){
       let name = ''; try { name = decodeURIComponent(href.slice(4)); } catch {}
-      return byTitle.has(name.toLowerCase()) ? `<a class="wl" data-wl="${esc(name)}" href="#notes">${text}</a>` : `<a class="wl wl-missing" data-wl="${esc(name)}" href="#notes" title="No note with this name yet">${text}</a>`;
+      const o = resolveLink(name);
+      return o && o.note ? `<a class="wl" data-wl="${esc(name)}" href="#notes">${text}</a>`
+        : o && o.npc ? `<a class="wl npc" data-npc="${esc(o.npc.id)}" href="#npcs" title="NPC: ${esc(npcShown(o.npc))}">${text}</a>`
+        : `<a class="wl wl-missing" data-wl="${esc(name)}" href="#notes" title="No note or NPC with this name yet">${text}</a>`;
     }
     return /^(https?:|mailto:)/i.test(href) ? `<a href="${esc(href)}" target="_blank" rel="noopener">${text}</a>` : text;
   }
@@ -1513,14 +1650,27 @@ function connHtml(n){
   const seen = new Set(), outs = [];
   for (const t of linksIn(n.body)){ const k = t.toLowerCase(); if (!seen.has(k) && k !== n.title.toLowerCase()){ seen.add(k); outs.push(t); } }
   const key = n.title.toLowerCase(), back = liveNotes().filter(o => o.id !== n.id && o.out.includes(key)).sort((a, b) => a.title.localeCompare(b.title));
-  const chips = outs.map(t => { const o = byTitle.get(t.toLowerCase()); return `<button type="button" class="chipbtn${o ? '' : ' missing'}" data-wl="${esc(o ? o.title : t)}">${esc(o ? o.title : t)}</button>`; }).join('');
+  const npcBack = NPCX.list.filter(r => (NPCX.out.get(r.id) || []).includes(key)).sort((a, b) => npcShown(a).localeCompare(npcShown(b)));
+  const chips = outs.map(linkChip).join('');
   const rows = back.map(o => { const i = o.plain.toLowerCase().indexOf(key); const snip = i >= 0 ? (i > 60 ? '…' : '') + o.plain.slice(Math.max(0, i - 60), i + key.length + 80) + '…' : o.summary; return rowFor(o, esc(snip)); }).join('');
-  if (!chips && !rows) return `<section class="conn"><p class="label">Connections</p><p class="sub">Nothing links here yet, and this note links nowhere. ${notesReadOnly || n.trashed ? '' : 'Edit it and type [[ to connect it.'}</p></section>`;
-  return `<section class="conn">${chips ? `<p class="label">Links to</p><div class="chips">${chips}</div>` : ''}${rows ? `<p class="label">Linked from · ${back.length}</p><div class="list">${rows}</div>` : ''}</section>`;
+  const npcRows = npcBack.map(npcRow).join('');
+  if (!chips && !rows && !npcRows) return `<section class="conn"><p class="label">Connections</p><p class="sub">Nothing links here yet, and this note links nowhere. ${notesReadOnly || n.trashed ? '' : 'Edit it and tap Link to connect it to a note or an NPC.'}</p></section>`;
+  return `<section class="conn">${chips ? `<p class="label">Links to</p><div class="chips">${chips}</div>` : ''}${rows ? `<p class="label">Linked from · ${back.length}</p><div class="list">${rows}</div>` : ''}${npcRows ? `<p class="label">Mentioned on NPC sheets · ${npcBack.length}</p><div class="list">${npcRows}</div>` : ''}</section>`;
+}
+// A chip for one [[link]]: a note, an NPC, or a dashed "not written yet".
+function linkChip(t){
+  const o = resolveLink(t);
+  if (o && o.note) return `<button type="button" class="chipbtn" data-wl="${esc(o.note.title)}">${esc(o.note.title)}</button>`;
+  if (o && o.npc) return `<button type="button" class="chipbtn npc" data-npc="${esc(o.npc.id)}" title="NPC sheet"><i aria-hidden="true"></i>${esc(npcShown(o.npc))}</button>`;
+  return `<button type="button" class="chipbtn missing" data-wl="${esc(t)}" title="Nothing has this name yet">${esc(t)}</button>`;
+}
+function npcRow(r){
+  return `<button type="button" class="row" data-npc="${esc(r.id)}"><span class="t">${esc(npcShown(r))}${npcName(r) && npcRole(r) ? ` <span class="muted" style="font-weight:500">· ${esc(npcRole(r))}</span>` : ''}</span><span class="r"><span class="pill ${esc(r.tier)}">NPC</span></span><span class="s">${esc([npcPlace(r), r.job, r.note].filter(Boolean).join(' · '))}</span></button>`;
 }
 function showNote(n, keepScroll){
   const pane = $('readerPane'), top = pane.scrollTop;
   current = n.id; shownSig = sigOf(n);
+  addNoteTab(n.id);
   $('reader').hidden = false; $('editor').hidden = true; $('readerBody').hidden = false;
   $('saveNoteBtn').hidden = true; $('editBtn').hidden = notesReadOnly || n.trashed || !notesCol;
   $('backLbl').textContent = 'Back';
@@ -1547,6 +1697,7 @@ function showNote(n, keepScroll){
   $('readerCrumb').textContent = prev ? 'Back to ' + prev.title : 'Back to the list';
   pane.scrollTop = keepScroll ? top : 0;
   setHash('n-' + n.id);
+  drawNoteStrip();
 }
 function openNote(id, push){
   const n = byId.get(id); if (!n || nEdit) return false;
@@ -1554,34 +1705,116 @@ function openNote(id, push){
   showNote(n); return true;
 }
 function openFromHash(id){ if (!notesLoaded){ pendingOpen = id; return; } if (nEdit || id === current || !byId.get(id)) return; stack = []; openNote(id, true); }
-function closeReader(){ $('reader').hidden = true; current = null; stack = []; setNoteMsg(''); setHash('notes'); }
+function closeReader(){ $('reader').hidden = true; current = null; stack = []; setNoteMsg(''); setHash('notes'); drawNoteStrip(); }
 function goBack(){
   stack.pop();
   while (stack.length && !byId.get(stack[stack.length - 1])) stack.pop();
   if (stack.length) showNote(byId.get(stack[stack.length - 1])); else closeReader();
 }
 function followLink(title){
-  const o = byTitle.get(String(title).toLowerCase());
-  if (o){ openNote(o.id, true); return; }
-  if (notesReadOnly || !notesCol){ setNoteMsg(`There is no note called “${title}” yet.`, ''); return; }
+  const o = resolveLink(title);
+  if (o && o.npc){ openNpcTab(o.npc.id); return; }
+  if (o){ if (!parkNoteEdit()) return; openNote(o.note.id, true); return; }
+  if (notesReadOnly || !notesCol){ setNoteMsg(`There is no note or NPC called “${title}” yet.`, ''); return; }
+  if (!parkNoteEdit()) return;
   const from = byId.get(current);
   startEdit(null, { title, folder: from ? from.folder : '' });
   setNoteMsg(`“${title}” doesn't exist yet. Write it and tap Save to create it.`, '');
 }
 $('readerBody').addEventListener('click', e => {
+  const p = e.target.closest('[data-npc]'); if (p){ e.preventDefault(); openNpcTab(p.dataset.npc); return; }
   const a = e.target.closest('[data-wl]'); if (a){ e.preventDefault(); followLink(a.dataset.wl); return; }
-  const gb = e.target.closest('[data-graph]'); if (gb){ showInGraph(gb.dataset.graph); return; }
+  const gb = e.target.closest('[data-graph]'); if (gb){ const gn = byId.get(gb.dataset.graph); if (gn) showInGraph('n:' + gn.title.toLowerCase()); return; }
   const r = e.target.closest('[data-nid]'); if (r){ openNote(r.dataset.nid, true); return; }
   if (e.target.closest('#restoreBtn')) restoreNote();
   else if (e.target.closest('#purgeBtn')) purgeNote(e.target.closest('#purgeBtn'));
 });
 $('edPreview').addEventListener('click', e => { if (e.target.closest('a.wl')) e.preventDefault(); });
 
+// ---------- open-note tabs ----------
+// Every note you open gets a tab along the top, so you can flip between notes. A note you were editing keeps
+// its unsaved text as a draft on this device and opens straight back into editing (the tab shows a dot).
+const NEW_TAB = '__new', TAB_MAX = 12;
+const readList = k => { try { const a = JSON.parse(store.get(k) || '[]'); return Array.isArray(a) ? a.filter(x => typeof x === 'string') : []; } catch { return []; } };
+let oTabs = readList('vael.noteTabs'), edTabs = new Set(readList('vael.noteEdTabs')), tabCloseArmed = '';
+const saveTabs = () => { store.set('vael.noteTabs', JSON.stringify(oTabs)); store.set('vael.noteEdTabs', JSON.stringify([...edTabs])); };
+const activeNoteTab = () => nEdit ? (nEdit.id || NEW_TAB) : !$('reader').hidden ? current : null;
+function addNoteTab(id){
+  if (!oTabs.includes(id)){
+    const at = oTabs.indexOf(activeNoteTab());
+    oTabs.splice(at >= 0 ? at + 1 : oTabs.length, 0, id);
+    while (oTabs.length > TAB_MAX){ const old = oTabs.find(x => x !== id && !edTabs.has(x)); if (!old) break; oTabs.splice(oTabs.indexOf(old), 1); }
+    saveTabs();
+  }
+}
+function dropNoteTab(id){ const i = oTabs.indexOf(id); if (i >= 0) oTabs.splice(i, 1); edTabs.delete(id); saveTabs(); return i; }
+function tabTitle(id){
+  if (id === NEW_TAB){ if (nEdit && !nEdit.id) return $('edTitle').value.trim() || 'New note'; try { return (JSON.parse(store.get('vael.draft.new') || '{}').t || '').trim() || 'New note'; } catch { return 'New note'; } }
+  const n = byId.get(id); return n ? n.title : '';
+}
+function drawNoteStrip(){
+  if (notesLoaded) oTabs = oTabs.filter(id => id === NEW_TAB || (byId.has(id) && !byId.get(id).trashed) || id === current);
+  const act = activeNoteTab(), strip = $('noteStrip');
+  strip.hidden = !oTabs.length;
+  if (!oTabs.length){ strip.innerHTML = ''; return; }
+  strip.innerHTML = `<button type="button" class="ot home" data-ot="" aria-current="${!act}" title="All notes"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>All notes</span></button>`
+    + oTabs.map(id => {
+      const t = tabTitle(id), dot = edTabs.has(id) || (id === act && noteDirty()), armed = tabCloseArmed === id;
+      return `<span class="ot${id === act ? ' on' : ''}"><button type="button" class="otl" data-ot="${esc(id)}" aria-current="${id === act}" title="${esc(t)}">${dot ? '<i class="dot" title="Unsaved changes"></i>' : ''}<span>${esc(t)}</span></button><button type="button" class="otx${armed ? ' armed' : ''}" data-otx="${esc(id)}" aria-label="Close ${esc(t)}">${armed ? 'Discard?' : '×'}</button></span>`;
+    }).join('');
+  const on = strip.querySelector('.ot.on'); if (on) on.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+// Leave the note being edited without losing anything: its text stays as a draft and the tab remembers it.
+function parkNoteEdit(){
+  if (!nEdit) return true;
+  const key = nEdit.id || NEW_TAB;
+  if (noteDirty()){ store.set(draftKey(), edSnap()); edTabs.add(key); }
+  else { store.set(draftKey(), ''); edTabs.delete(key); if (key === NEW_TAB) dropNoteTab(NEW_TAB); }
+  saveTabs(); stopEdit(); return true;
+}
+function activateNoteTab(id){
+  tabCloseArmed = '';
+  if (id === activeNoteTab()){ drawNoteStrip(); return; }
+  parkNoteEdit();
+  if (!id){ closeReader(); return; }
+  if (id === NEW_TAB){ if (notesReadOnly || !notesCol){ dropNoteTab(NEW_TAB); drawNoteStrip(); return; } current = null; startEdit(null, null); return; }
+  const n = byId.get(id); if (!n) return;
+  stack = stack.filter(x => x !== id); stack.push(id);
+  if (edTabs.has(id) && !n.trashed && !notesReadOnly && notesCol){ current = id; startEdit(n); } else showNote(n);
+}
+function closeNoteTab(id){
+  const act = activeNoteTab(), unsaved = edTabs.has(id) || (id === act && noteDirty());
+  if (unsaved && tabCloseArmed !== id){ tabCloseArmed = id; drawNoteStrip(); setNoteMsg('This tab has unsaved changes. Tap Discard? to close it and drop them.', 'err'); return; }
+  tabCloseArmed = '';
+  if (id === act && nEdit){ store.set(draftKey(), ''); stopEdit(); }
+  else if (edTabs.has(id)) store.set('vael.draft.' + (id === NEW_TAB ? 'new' : id), '');
+  const i = dropNoteTab(id); stack = stack.filter(x => x !== id);
+  if (id === act){ const next = oTabs[Math.min(i, oTabs.length - 1)]; if (next) activateNoteTab(next); else closeReader(); }
+  else drawNoteStrip();
+  setNoteMsg('');
+}
+$('noteStrip').addEventListener('click', e => {
+  const x = e.target.closest('[data-otx]'); if (x){ closeNoteTab(x.dataset.otx); return; }
+  const b = e.target.closest('[data-ot]'); if (b) activateNoteTab(b.dataset.ot);
+});
+// Middle-click a tab to close it, the way browsers do.
+$('noteStrip').addEventListener('auxclick', e => { const b = e.target.closest('[data-ot]'); if (e.button === 1 && b && b.dataset.ot){ e.preventDefault(); closeNoteTab(b.dataset.ot); } });
+
 // ---------- editing ----------
 const ta = $('edBody');
-let nEdit = null, nBase = '', nSaving = false, nBackArmed = false, nTrashArmed = false, nPreview = false, draftTimer = 0, lastCtx = null, suggFirst = '', histCache = [];
+let nEdit = null, nBase = '', nSaving = false, nBackArmed = false, nTrashArmed = false, nPreview = false, draftTimer = 0, histCache = [];
 function setNoteMsg(text, kind){ const m = $('noteMsg'); m.textContent = text; m.className = 'smsg' + (kind ? ' ' + kind : ''); }
-const edSnap = () => JSON.stringify({ t: $('edTitle').value.trim(), f: $('edFolder').value, b: ta.value });
+// The Status line ("Status: Draft") is picked from a box instead of typed, and put back on top when saving.
+const STATUSES = ['Draft', 'Canon', 'Future scope', 'Archived'];
+function splitStatus(body){ const m = /^Status:[ \t]*(.*)(\r?\n|$)/.exec(body); return m ? { st: m[1].trim(), text: body.slice(m[0].length).replace(/^(\r?\n)+/, '') } : { st: '', text: body }; }
+function fillStatus(st){
+  const opts = STATUSES.slice(); if (st && !opts.includes(st)) opts.unshift(st);
+  $('edStatus').innerHTML = opts.map(o => `<option value="${esc(o)}">${esc(o.length > 44 ? o.slice(0, 42) + '…' : o)}</option>`).join('') + '<option value="">No status</option>';
+  $('edStatus').value = st;
+}
+const edBody = () => { const st = $('edStatus').value; return st ? `Status: ${st}\n\n${ta.value}` : ta.value; };
+function setEdBody(body){ const { st, text } = splitStatus(String(body || '')); fillStatus(st); ta.value = text; }
+const edSnap = () => JSON.stringify({ t: $('edTitle').value.trim(), f: $('edFolder').value, b: edBody() });
 const noteDirty = () => !!nEdit && edSnap() !== nBase;
 const draftKey = () => 'vael.draft.' + (nEdit && nEdit.id ? nEdit.id : 'new');
 function resetNoteArms(){ nBackArmed = false; nTrashArmed = false; $('backLbl').textContent = nEdit ? 'Cancel' : 'Back'; $('trashBtn').textContent = 'Move to trash'; $('trashBtn').classList.remove('armed'); }
@@ -1593,21 +1826,22 @@ function fillFolders(value){
   $('edFolder').value = value || list[0];
 }
 function setPreview(on){
-  nPreview = on; $('prevBtn').setAttribute('aria-pressed', String(on)); $('prevBtn').textContent = on ? 'Write' : 'Preview';
+  nPreview = on; $('prevBtn').setAttribute('aria-pressed', String(on)); $('writeBtn').setAttribute('aria-pressed', String(!on));
   $('edBodyWrap').hidden = on; $('edPreview').hidden = !on; $('sugg').hidden = true;
-  for (const b of document.querySelectorAll('.edtools [data-fmt]')) b.disabled = on;
-  if (on){ $('edPreview').innerHTML = renderMd(ta.value.replace(/^Status:.*\n?/m, '')) || '<p class="sub">Nothing to preview yet.</p>'; mountZurivel($('edPreview')); } else autoGrow();
+  for (const b of document.querySelectorAll('.edtools [data-fmt], #edStyle')) b.disabled = on;
+  if (on){ $('edPreview').innerHTML = renderMd(ta.value) || '<p class="sub">Nothing to preview yet.</p>'; mountZurivel($('edPreview')); } else { autoGrow(); edState(); }
 }
 function startEdit(n, preset){
   const g = GROUPS.find(x => x.id === group);
   nEdit = { id: n ? n.id : null, base: n ? n.updatedAt : '', createdAt: n ? n.createdAt : '' };
   $('edTitle').value = n ? n.title : (preset && preset.title) || '';
   fillFolders(n ? n.folder : (preset && preset.folder) || (g ? g.folders[0] : 'Story & Lore'));
-  ta.value = n ? n.body : NEW_BODY;
+  setEdBody(n ? n.body : NEW_BODY);
   nBase = edSnap();
   setNoteMsg('');
   const saved = store.get(draftKey());
-  if (saved) try { const d = JSON.parse(saved); if (d && typeof d.b === 'string' && JSON.stringify({ t: d.t, f: d.f, b: d.b }) !== nBase){ $('edTitle').value = d.t || ''; if (d.f) fillFolders(d.f); ta.value = d.b; setNoteMsg('Restored your unsaved draft from this device. Tap Cancel to drop it.', ''); } } catch {}
+  if (saved) try { const d = JSON.parse(saved); if (d && typeof d.b === 'string' && JSON.stringify({ t: d.t, f: d.f, b: d.b }) !== nBase){ $('edTitle').value = d.t || ''; if (d.f) fillFolders(d.f); setEdBody(d.b); setNoteMsg('Your unsaved changes from this device are back. Tap Save to keep them, or Cancel to drop them.', ''); } } catch {}
+  addNoteTab(n ? n.id : NEW_TAB);
   $('reader').hidden = false; $('readerBody').hidden = true; $('editor').hidden = false;
   $('editBtn').hidden = true; $('saveNoteBtn').hidden = false; $('saveNoteBtn').disabled = false;
   $('readerCrumb').textContent = n ? 'Editing' : 'New note';
@@ -1615,94 +1849,200 @@ function startEdit(n, preset){
   resetNoteArms(); setPreview(false);
   $('readerPane').scrollTop = 0;
   if (!n && !$('edTitle').value) $('edTitle').focus();
+  drawNoteStrip();
 }
-function stopEdit(){ nEdit = null; lastCtx = null; clearTimeout(draftTimer); $('sugg').hidden = true; $('editor').hidden = true; $('saveNoteBtn').hidden = true; resetNoteArms(); }
+function stopEdit(){ nEdit = null; clearTimeout(draftTimer); $('sugg').hidden = true; $('editor').hidden = true; $('saveNoteBtn').hidden = true; resetNoteArms(); }
+let stripTimer = 0;
 function afterEdit(){
-  autoGrow(); drawSugg();
+  autoGrow(); noteSugg.draw(); edState();
   if (nBackArmed || nTrashArmed){ resetNoteArms(); setNoteMsg(''); }
   clearTimeout(draftTimer);
   draftTimer = setTimeout(() => { if (nEdit) store.set(draftKey(), noteDirty() ? edSnap() : ''); }, 500);
+  clearTimeout(stripTimer); stripTimer = setTimeout(drawNoteStrip, 300);   // the unsaved dot and a new note's title
 }
 $('editBtn').addEventListener('click', () => { const n = byId.get(current); if (n) startEdit(n); });
-$('newNoteBtn').addEventListener('click', () => { stack = []; current = null; startEdit(null, null); });
+$('newNoteBtn').addEventListener('click', () => { parkNoteEdit(); stack = []; current = null; startEdit(null, null); });
 $('editor').addEventListener('submit', e => e.preventDefault());
 $('edTitle').addEventListener('input', afterEdit);
 $('edFolder').addEventListener('input', afterEdit);
+$('edStatus').addEventListener('input', afterEdit);
 ta.addEventListener('input', afterEdit);
-ta.addEventListener('click', drawSugg);
-ta.addEventListener('keyup', e => { if ((e.key || "").startsWith("Arrow") || e.key === 'Home' || e.key === 'End') drawSugg(); });
-ta.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('sugg').hidden){ $('sugg').hidden = true; e.stopPropagation(); } });
-$('prevBtn').addEventListener('click', () => setPreview(!nPreview));
+ta.addEventListener('click', () => { noteSugg.draw(); edState(); });
+ta.addEventListener('keyup', e => { if ((e.key || '').startsWith('Arrow') || e.key === 'Home' || e.key === 'End'){ noteSugg.draw(); edState(); } });
+document.addEventListener('selectionchange', () => { if (document.activeElement === ta) edState(); });
+$('prevBtn').addEventListener('click', () => setPreview(true));
+$('writeBtn').addEventListener('click', () => setPreview(false));
 
-// [[ suggestions: shown under the toolbar while the caret sits inside an unfinished link.
-function linkCtx(){
-  const pos = ta.selectionStart; if (pos !== ta.selectionEnd) return null;
-  const before = ta.value.slice(0, pos), i = before.lastIndexOf('[['); if (i < 0) return null;
-  const q = before.slice(i + 2); if (/[\]\n|#]/.test(q) || q.length > 60) return null;
-  return { start: i, pos, q };
+// Replace part of a text box the way typing would, so Undo (Ctrl+Z, or the Undo button) can take it back.
+function replaceIn(el, start, end, text, selA, selB){
+  el.focus(); el.setSelectionRange(start, end);
+  let ok = false; try { ok = document.execCommand('insertText', false, text); } catch {}
+  if (!ok || el.value.slice(start, start + text.length) !== text) el.setRangeText(text, start, end, 'end');
+  if (selA != null) el.setSelectionRange(selA, selB == null ? selA : selB);
 }
-function drawSugg(){
-  const box = $('sugg'); suggFirst = '';
-  const c = nEdit && !nPreview ? linkCtx() : null; lastCtx = c;
-  if (!c){ box.hidden = true; return; }
-  const q = c.q.trim().toLowerCase(), live = liveNotes().filter(n => n.id !== nEdit.id);
-  const list = live.filter(n => !q || n.title.toLowerCase().includes(q)).sort((a, b) => (b.title.toLowerCase().startsWith(q) - a.title.toLowerCase().startsWith(q)) || (q ? 0 : b.updatedAt.localeCompare(a.updatedAt)) || a.title.localeCompare(b.title)).slice(0, 7);
-  const exact = live.some(n => n.title.toLowerCase() === q);
-  suggFirst = list[0] ? list[0].title : '';
-  box.innerHTML = list.map((n, i) => `<button type="button" data-pick="${esc(n.title)}"${i ? '' : ' class="act"'}><span>${esc(n.title)}</span><small>${esc(groupOf(n).name)}</small></button>`).join('')
-    + (q && !exact ? `<button type="button" data-pick="${esc(c.q.trim())}"><span>Link “${esc(c.q.trim())}”</span><small>new note, write it later</small></button>` : '');
-  box.hidden = !box.innerHTML;
-}
-function pickLink(title){
-  const c = lastCtx; if (!c) return;
-  let end = c.pos; if (ta.value.slice(end, end + 2) === ']]') end += 2;
-  ta.focus(); ta.setRangeText('[[' + title + ']]', c.start, end, 'end');
-  afterEdit();
-}
-$('sugg').addEventListener('pointerdown', e => e.preventDefault());
-$('sugg').addEventListener('click', e => { const b = e.target.closest('[data-pick]'); if (b) pickLink(b.dataset.pick); });
 
-// Toolbar. Each button works on the selection, or on the current line.
+// [[ suggestions: shown under the toolbar (or under an NPC sheet's text box) while the caret sits in an unfinished link.
+// They offer notes and NPCs; an NPC is linked by name, or by job when it has no name.
+function linkSuggestions(q, opt){
+  const lq = q.trim().toLowerCase();
+  const notes = liveNotes().filter(n => n.id !== opt.noteId && (!lq || n.title.toLowerCase().includes(lq)))
+    .map(n => ({ t: n.title, k: groupOf(n).name, s: n.title.toLowerCase().startsWith(lq) ? 2 : 1, up: n.updatedAt, npc: false }));
+  const npcs = NPCX.list.filter(r => r.id !== opt.npcId).map(r => ({ r, t: npcLinkName(r) })).filter(x => x.t)
+    .filter(x => !lq || [x.t, x.r.name, x.r.role, x.r.place, x.r.job].join(' ').toLowerCase().includes(lq))
+    .map(({ r, t }) => ({ t, k: 'NPC' + (npcName(r) && npcRole(r) ? ' · ' + npcRole(r) : '') + (npcPlace(r) && !t.includes('(') ? ' · ' + npcPlace(r) : ''), s: t.toLowerCase().startsWith(lq) || npcRole(r).toLowerCase().startsWith(lq) ? 2 : 1, up: String(r.updatedAt || ''), npc: true }));
+  const pref = opt.prefer === 'npc' ? x => x.npc : x => !x.npc;
+  const all = notes.concat(npcs).sort((a, b) => (b.s - a.s) || (lq ? 0 : (pref(b) - pref(a)) || b.up.localeCompare(a.up)) || a.t.localeCompare(b.t));
+  return all.slice(0, 8);
+}
+function makeSugg(box, opts){
+  const S = { el: null, ctx: null, first: '' };
+  S.ctxOf = el => {
+    const pos = el.selectionStart; if (pos !== el.selectionEnd) return null;
+    const before = el.value.slice(0, pos), i = before.lastIndexOf('[['); if (i < 0) return null;
+    const q = before.slice(i + 2); if (/[\]\n|#]/.test(q) || q.length > 60) return null;
+    return { start: i, pos, q };
+  };
+  S.draw = () => {
+    S.first = '';
+    const c = S.el && opts.active() ? S.ctxOf(S.el) : null; S.ctx = c;
+    if (!c){ box.hidden = true; return; }
+    const o = opts.exclude(), list = linkSuggestions(c.q, o), q = c.q.trim();
+    const exact = q && resolveLink(q);
+    S.first = list[0] ? list[0].t : '';
+    box.innerHTML = list.map((x, i) => `<button type="button" data-pick="${esc(x.t)}"${i ? '' : ' class="act"'}><span>${x.npc ? '<i class="npcdot" aria-hidden="true"></i>' : ''}${esc(x.t)}</span><small>${esc(x.k)}</small></button>`).join('')
+      + (q && !exact ? `<button type="button" data-pick="${esc(q)}"><span>Link “${esc(q)}”</span><small>not written yet</small></button>` : '')
+      + (!list.length && !q ? '<div class="sempty">Start typing a note title, an NPC name or a job.</div>' : '');
+    box.hidden = !box.innerHTML;
+  };
+  S.pick = title => {
+    const c = S.ctx, el = S.el; if (!c || !el) return;
+    let end = c.pos; if (el.value.slice(end, end + 2) === ']]') end += 2;
+    const text = '[[' + title + ']]';
+    replaceIn(el, c.start, end, text, c.start + text.length);
+    box.hidden = true; opts.changed && opts.changed();
+  };
+  box.addEventListener('pointerdown', e => e.preventDefault());
+  box.addEventListener('click', e => { const b = e.target.closest('[data-pick]'); if (b) S.pick(b.dataset.pick); });
+  return S;
+}
+const noteSugg = makeSugg($('sugg'), { active: () => !!nEdit && !nPreview, exclude: () => ({ noteId: nEdit && nEdit.id, prefer: 'note' }), changed: afterEdit });
+noteSugg.el = ta;
+ta.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !$('sugg').hidden){ $('sugg').hidden = true; e.stopPropagation(); return; }
+  if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+  const k = e.key.toLowerCase(), map = { b: 'b', i: 'i', k: 'link' };
+  if (map[k] && !e.shiftKey){ e.preventDefault(); fmt(map[k]); }
+});
+$('editor').addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's'){ e.preventDefault(); saveNote(); } });
+
+// ---------- toolbar ----------
+// Line tools (style, lists) work on every line the selection touches. Bold and italic wrap the selection, or the
+// word under the caret, and tapping them again takes the marks off.
+function lineSpan(el){
+  const v = el.value, s = el.selectionStart, e = el.selectionEnd, a = v.lastIndexOf('\n', s - 1) + 1;
+  let b = v.indexOf('\n', e > s && v[e - 1] === '\n' ? e - 1 : e); if (b < 0) b = v.length;
+  return { a, b, lines: v.slice(a, b).split('\n') };
+}
+function setLines(fn){
+  const { a, b, lines } = lineSpan(ta), one = ta.selectionStart === ta.selectionEnd, text = fn(lines).join('\n');
+  replaceIn(ta, a, b, text, one ? a + text.length : a, a + text.length);
+}
+const listKind = l => /^\s*[-*+] \[[ xX]\] /.test(l) ? 'task' : /^\s*[-*+] /.test(l) ? 'ul' : /^\s*\d+[.)] /.test(l) ? 'ol' : '';
+const LIST_RE = /^(\s*)(?:[-*+] \[[ xX]\] |[-*+] |\d+[.)] )?/;
+const lineStyle = l => /^##? /.test(l) ? 'h2' : /^#{3,6} /.test(l) ? 'h3' : /^> ?/.test(l) ? 'q' : 'p';
+function edState(){
+  if (!nEdit || nPreview) return;
+  const { lines } = lineSpan(ta), l = lines[0] || '';
+  $('edStyle').value = lineStyle(l);
+  for (const k of ['ul', 'ol', 'task']){ const b = document.querySelector(`.edtools [data-fmt="${k}"]`); if (b) b.setAttribute('aria-pressed', String(listKind(l) === k)); }
+}
+function wrapMark(m){
+  const v = ta.value; let s = ta.selectionStart, e = ta.selectionEnd;
+  while (e > s && /\s/.test(v[e - 1])) e--; while (s < e && /\s/.test(v[s])) s++;
+  if (s === e){
+    const L = (/[\p{L}\p{N}'’_-]*$/u.exec(v.slice(0, s)) || [''])[0].length, R = (/^[\p{L}\p{N}'’_-]*/u.exec(v.slice(s)) || [''])[0].length;
+    s -= L; e += R;
+  }
+  const sel = v.slice(s, e);
+  let l = 0; while (s - l - 1 >= 0 && v[s - l - 1] === '*') l++;
+  let r = 0; while (e + r < v.length && v[e + r] === '*') r++;
+  const has = m === '**' ? l >= 2 && r >= 2 && l !== 4 : l % 2 === 1 && r % 2 === 1;
+  if (sel && has){ replaceIn(ta, s - m.length, e + m.length, sel, s - m.length, e - m.length); return; }
+  if (!sel){ replaceIn(ta, s, e, m + m, s + m.length); return; }
+  replaceIn(ta, s, e, m + sel + m, s + m.length, e + m.length);
+}
 function fmt(kind){
-  const s = ta.selectionStart, e = ta.selectionEnd, v = ta.value, sel = v.slice(s, e), ls = v.lastIndexOf('\n', s - 1) + 1;
-  ta.focus();
-  if (kind === 'b' || kind === 'i'){
-    const m = kind === 'b' ? '**' : '*';
-    if (sel) ta.setRangeText(m + sel + m, s, e, 'end'); else { ta.setRangeText(m + m, s, e, 'end'); ta.setSelectionRange(s + m.length, s + m.length); }
-  } else if (kind === 'h'){
-    const cur = /^(#{1,6}) /.exec(v.slice(ls, ls + 8));
-    if (!cur) ta.setRangeText('## ', ls, ls, 'preserve'); else if (cur[1].length === 2) ta.setRangeText('### ', ls, ls + 3, 'preserve'); else ta.setRangeText('', ls, ls + cur[0].length, 'preserve');
-  } else if (kind === 'ul' || kind === 'task'){
-    const p = kind === 'ul' ? '- ' : '- [ ] ';
-    if (!v.slice(ls).startsWith(p)){ ta.setRangeText(p, ls, ls, 'preserve'); if (s === ls) ta.setSelectionRange(s + p.length, e + p.length); }
+  if (kind === 'b' || kind === 'i') wrapMark(kind === 'b' ? '**' : '*');
+  else if (kind === 'ul' || kind === 'ol' || kind === 'task'){
+    setLines(lines => {
+      const filled = lines.filter(l => l.trim()), all = filled.length > 0 && filled.every(l => listKind(l) === kind);
+      let i = 0;
+      return lines.map(l => {
+        if (!l.trim() && lines.length > 1) return l;
+        const m = LIST_RE.exec(l), ind = m[1], rest = l.slice(m[0].length).replace(/^(#{1,6} |> ?)/, '');
+        if (all) return ind + rest;
+        i++; return ind + (kind === 'ul' ? '- ' : kind === 'task' ? '- [ ] ' : i + '. ') + rest;
+      });
+    });
+  } else if (kind === 'table'){
+    const v = ta.value, p = ta.selectionEnd, eol = v.indexOf('\n', p) < 0 ? v.length : v.indexOf('\n', p);
+    const lineHas = v.slice(v.lastIndexOf('\n', p - 1) + 1, eol).trim() !== '';
+    const head = (lineHas ? '\n\n' : (eol > 0 && v[eol - 1] !== '\n' && v.slice(0, eol).trim() ? '\n' : ''));
+    const tbl = '| Column | Column | Column |\n|---|---|---|\n|  |  |  |\n';
+    const at = lineHas ? eol : v.lastIndexOf('\n', p - 1) + 1;
+    replaceIn(ta, at, at, head + tbl, at + head.length + 2, at + head.length + 8);
   } else if (kind === 'link'){
-    ta.setRangeText('[[' + sel, s, e, 'end');
+    const s = ta.selectionStart, e = ta.selectionEnd, sel = ta.value.slice(s, e).trim();
+    replaceIn(ta, s, e, '[[' + sel, s + 2 + sel.length);
+  } else if (kind === 'undo' || kind === 'redo'){
+    ta.focus(); try { document.execCommand(kind); } catch {}
   }
   afterEdit();
 }
-document.querySelector('.edtools').addEventListener('pointerdown', e => { if (e.target.closest('[data-fmt]')) e.preventDefault(); });
-document.querySelector('.edtools').addEventListener('click', e => { const b = e.target.closest('[data-fmt]'); if (b && !b.disabled) fmt(b.dataset.fmt); });
+$('edStyle').addEventListener('change', () => {
+  const v = $('edStyle').value;
+  setLines(lines => lines.map(l => { if (!l.trim() && lines.length > 1) return l; const rest = l.replace(/^(#{1,6} |> ?)/, ''); return (v === 'h2' ? '## ' : v === 'h3' ? '### ' : v === 'q' ? '> ' : '') + rest; }));
+  afterEdit();
+});
+document.querySelector('.edtools').addEventListener('pointerdown', e => { if (e.target.closest('button[data-fmt]')) e.preventDefault(); });
+document.querySelector('.edtools').addEventListener('click', e => {
+  const h = e.target.closest('[data-help]'); if (h){ openHelp(h.dataset.help); return; }
+  const b = e.target.closest('[data-fmt]'); if (b && !b.disabled) fmt(b.dataset.fmt);
+});
 // Return picks the top suggestion, and continues or ends a list.
 ta.addEventListener('beforeinput', e => {
   if (e.inputType !== 'insertLineBreak' && e.inputType !== 'insertParagraph') return;
-  if (!$('sugg').hidden && suggFirst && lastCtx){ e.preventDefault(); pickLink(suggFirst); return; }
+  if (!$('sugg').hidden && noteSugg.first && noteSugg.ctx){ e.preventDefault(); noteSugg.pick(noteSugg.first); return; }
   const s = ta.selectionStart; if (s !== ta.selectionEnd) return;
   const v = ta.value, ls = v.lastIndexOf('\n', s - 1) + 1, m = /^(\s*)(- \[[ xX]\] |[-*] |(\d+)\. )(.*)$/.exec(v.slice(ls, s));
   if (!m) return;
   e.preventDefault();
-  if (!m[4].trim()) ta.setRangeText('', ls, s, 'end');
-  else ta.setRangeText('\n' + m[1] + (m[3] ? (Number(m[3]) + 1) + '. ' : m[2].startsWith('- [') ? '- [ ] ' : m[2]), s, s, 'end');
+  if (!m[4].trim()) replaceIn(ta, ls, s, '', ls);
+  else { const t = '\n' + m[1] + (m[3] ? (Number(m[3]) + 1) + '. ' : m[2].startsWith('- [') ? '- [ ] ' : m[2]); replaceIn(ta, s, s, t, s + t.length); }
   afterEdit();
 });
 
 // ---------- saving ----------
+const linkRe = name => new RegExp('\\[\\[\\s*' + escRe(name) + '\\s*((?:#[^\\]|\\n]*)?(?:\\\\?\\|[^\\]\\n]*)?)\\]\\]', 'gi');
+// After a rename, rewrite [[old]] links in other notes and on NPC sheets. Returns how many were changed.
 async function relink(oldTitle, newTitle, selfId){
-  const re = new RegExp('\\[\\[\\s*' + escRe(oldTitle) + '\\s*((?:#[^\\]|\\n]*)?(?:\\\\?\\|[^\\]\\n]*)?)\\]\\]', 'gi');
+  const re = linkRe(oldTitle);
   let count = 0;
-  for (const o of NOTES.slice()){
+  if (notesCol) for (const o of NOTES.slice()){
     if (o.id === selfId) continue;
     const nb = o.body.replace(re, (_, rest) => '[[' + newTitle + rest + ']]');
     if (nb !== o.body){ await notesCol.doc(o.id).update({ body: nb }); applyLocal({ id: o.id, body: nb }); count++; }
+  }
+  return count + await relinkNpcs(re, newTitle, selfId);
+}
+async function relinkNpcs(re, newName, skipId){
+  if (!col) return 0;
+  let count = 0;
+  for (const r of NPCX.list.slice()){
+    if (r.id === skipId) continue;
+    const ch = {};
+    for (const [k, v] of Object.entries(r)) if (typeof v === 'string' && !NPC_LINK_SKIP.has(k)){ const nv = v.replace(re, (_, rest) => '[[' + newName + rest + ']]'); if (nv !== v) ch[k] = nv; }
+    if (Object.keys(ch).length){ try { await col.doc(r.id).update(ch); count++; } catch {} }
   }
   return count;
 }
@@ -1711,7 +2051,7 @@ async function pruneHistory(id){
 }
 async function saveNote(){
   if (nSaving || !nEdit || !notesCol) return;
-  const title = $('edTitle').value.trim().replace(/\s+/g, ' '), folder = $('edFolder').value, body = ta.value.replace(/\r\n/g, '\n').replace(/\s+$/, '') + '\n';
+  const title = $('edTitle').value.trim().replace(/\s+/g, ' '), folder = $('edFolder').value, body = edBody().replace(/\r\n/g, '\n').replace(/\s+$/, '') + '\n';
   if (!title){ setNoteMsg('Give the note a title before saving.', 'err'); $('edTitle').focus(); return; }
   if (/[\[\]|#^\\]/.test(title)){ setNoteMsg('A title can\'t contain [ ] | # ^ or \\, because links use them.', 'err'); $('edTitle').focus(); return; }
   const clash = byTitle.get(title.toLowerCase());
@@ -1731,10 +2071,13 @@ async function saveNote(){
     applyLocal({ id, ...doc });
     const moved = old && old.title !== title ? await relink(old.title, title, id) : 0;
     const isNew = !old;
+    edTabs.delete(isNew ? NEW_TAB : id);
+    if (isNew){ const ti = oTabs.indexOf(NEW_TAB); if (ti >= 0) oTabs[ti] = id; }
+    saveTabs();
     stopEdit(); refreshLists();
     if (isNew) stack.push(id);
     showNote(byId.get(id));
-    setNoteMsg(moved ? `Saved. Updated the links in ${moved} other note${moved === 1 ? '' : 's'}.` : 'Saved.', 'ok');
+    setNoteMsg(moved ? `Saved. Updated the links in ${moved} other note${moved === 1 ? '' : 's'} and NPC sheet${moved === 1 ? '' : 's'}.` : 'Saved.', 'ok');
     if (old) pruneHistory(id);
   } catch (e) {
     const c = e && e.code;
@@ -1749,6 +2092,8 @@ $('readerBack').addEventListener('click', () => {
   if (!nEdit){ goBack(); return; }
   if (noteDirty() && !nBackArmed){ nBackArmed = true; $('backLbl').textContent = 'Discard?'; setNoteMsg('You have unsaved changes. Tap Discard? to drop them, or Save.', 'err'); return; }
   const id = nEdit.id; store.set(draftKey(), ''); stopEdit(); setNoteMsg('');
+  if (id) edTabs.delete(id); else dropNoteTab(NEW_TAB);
+  saveTabs();
   const n = id ? byId.get(id) : null;
   if (n) showNote(n); else if (stack.length && byId.get(stack[stack.length - 1])) showNote(byId.get(stack[stack.length - 1])); else closeReader();
 });
@@ -1767,7 +2112,7 @@ $('histBtn').addEventListener('click', async () => {
 });
 $('histList').addEventListener('click', e => {
   const b = e.target.closest('[data-h]'); if (!b) return; const h = histCache[Number(b.dataset.h)]; if (!h) return;
-  $('edTitle').value = h.title || $('edTitle').value; if (h.folder) fillFolders(h.folder); ta.value = h.body || '';
+  $('edTitle').value = h.title || $('edTitle').value; if (h.folder) fillFolders(h.folder); setEdBody(h.body || '');
   setPreview(false); afterEdit(); $('histList').hidden = true; $('readerPane').scrollTop = 0;
   setNoteMsg(`Loaded the version from ${fmtDateTime(h.savedAt)}. Tap Save to bring it back, or Cancel to keep the current one.`, '');
 });
@@ -1782,7 +2127,7 @@ $('trashBtn').addEventListener('click', async () => {
   $('trashBtn').disabled = true;
   try {
     await notesCol.doc(n.id).update({ trashed: true, trashedAt: new Date().toISOString() });
-    store.set(draftKey(), ''); applyLocal({ id: n.id, trashed: true }); stopEdit(); refreshLists(); goBack();
+    store.set(draftKey(), ''); applyLocal({ id: n.id, trashed: true }); stopEdit(); dropNoteTab(n.id); stack = stack.filter(x => x !== n.id); stack.push(n.id); refreshLists(); goBack();
   } catch { setNoteMsg('Could not move the note to the trash. Try again.', 'err'); resetNoteArms(); }
   finally { $('trashBtn').disabled = false; }
 });
@@ -1800,41 +2145,158 @@ async function purgeNote(btn){
     const ref = notesCol.doc(n.id), snap = await ref.collection('history').limit(100).get();
     for (const d of snap.docs) await ref.collection('history').doc(d.id).delete();
     await ref.delete();
-    setNotes(rawNotes.filter(x => x.id !== n.id)); refreshLists(); goBack();
+    setNotes(rawNotes.filter(x => x.id !== n.id)); dropNoteTab(n.id); refreshLists(); goBack();
   } catch { setNoteMsg('Could not delete the note. Try again.', 'err'); btn.disabled = false; }
 }
 
+// ---------- help ----------
+// The "?" in the top bar (and next to the editing tools) opens this guide. The "You type / You see" examples are
+// rendered by the same code that shows notes, so they always match what a note really looks like.
+const helpEx = rows => `<div class="tbl"><table class="hx"><thead><tr><th>You type</th><th>You see</th></tr></thead><tbody>${rows.map(([md, tip]) => `<tr><td><code>${esc(md).replace(/\n/g, '<br>')}</code>${tip ? `<small>${tip}</small>` : ''}</td><td class="prose">${renderMd(md)}</td></tr>`).join('')}</tbody></table></div>`;
+const HELP = [
+  ['start', 'Getting around', () => `
+<p>Vael Notes keeps the design notes, the NPC roster and the island map in one place. Everything saves for the whole team as soon as you tap <b>Save</b>.</p>
+<h3>The four tabs at the bottom</h3>
+<ul>
+<li><b>Notes:</b> the design notes, sorted into groups (Canon, Game design, Combat, Magic and so on). <b>Recent</b> shows what changed last, and the search box looks through every note.</li>
+<li><b>NPCs:</b> everyone on the island. Each NPC has a character sheet.</li>
+<li><b>Graph:</b> a map of how notes and NPCs link to each other.</li>
+<li><b>Island:</b> the to-scale plan of Vael Island.</li>
+</ul>
+<h3>Tabs for open notes and NPCs</h3>
+<p>Every note you open gets a tab along the top of the Notes screen, so you can jump between notes without searching again. <b>All notes</b> on the left takes you back to the list. NPC sheets work the same way: each NPC you open gets a tab at the top of the sheet.</p>
+<ul>
+<li>Tap <b>×</b> on a tab to close it. A middle click closes it too.</li>
+<li>A <span class="dotk"></span> dot means that tab has changes you haven't saved. They're kept on this device, and the note or sheet opens straight back into editing when you return to it.</li>
+<li>Closing a tab with unsaved changes asks first: tap <b>Discard?</b> to drop them.</li>
+</ul>
+<p>Open tabs are remembered on this device, so they're still there after you reload.</p>`],
+  ['writing', 'Writing notes', () => `
+<p>Tap <b>Edit</b> on a note, or <b>New note</b> in the list. The boxes above the text set the note's <b>Section</b> (which group it's listed in) and its <b>Status</b> (Draft, Canon, Future scope or Archived), which shows as a coloured label.</p>
+<h3>The toolbar</h3>
+<ul>
+<li><b>Text / Section / Heading / Quote:</b> the first box sets what the current line is. A <b>Section</b> becomes a heading you can tap to fold open and shut; a note with three or more sections starts folded. A <b>Heading</b> is a smaller title inside a section.</li>
+<li><b>B</b> and <b>I</b> make the selected text bold or italic. With nothing selected they work on the word the cursor is in. Tap again to undo it.</li>
+<li>The three list buttons make <b>bullets</b>, a <b>numbered list</b> or a <b>checklist</b>. They work on every line you've selected, and tapping again turns the list back into plain lines. Press Return to start the next item; press it on an empty item to end the list.</li>
+<li><b>Table</b> adds a small table to fill in.</li>
+<li><b>Link</b> connects a note or an NPC (see the Links tab).</li>
+<li><b>Undo</b> and <b>Redo</b> step back and forward through your changes, toolbar changes included.</li>
+<li><b>Write / Preview</b> switches between the text and how it will look.</li>
+</ul>
+<p>Keyboard shortcuts: Ctrl+B bold, Ctrl+I italic, Ctrl+K link, Ctrl+Z undo, Ctrl+S save.</p>
+<h3>What the marks mean</h3>
+<p>The toolbar types these marks for you, but you can type them yourself too:</p>
+${helpEx([
+  ['## Wallrun', 'a Section'],
+  ['### Timings', 'a Heading'],
+  ['**bold** and *italic*', ''],
+  ['- a bullet\n- another', ''],
+  ['1. first\n2. second', ''],
+  ['- [ ] to do\n- [x] done', 'type an x in the box to tick it'],
+  ['> A quote or an aside.', ''],
+  ['| Speed | Time |\n|---|---|\n| 6.6 m/s | 1.5 s |', 'a table'],
+  ['---', 'a dividing line'],
+])}
+<h3>Saving, history and the trash</h3>
+<ul>
+<li>Nothing is shared until you tap <b>Save</b>. While you type, a draft is kept on this device, so a closed tab or a dropped connection doesn't lose your text.</li>
+<li><b>History</b> lists earlier versions of the note. Load one and tap Save to bring it back.</li>
+<li><b>Move to trash</b> hides a note. Restore it from the <b>Trash</b> group, or delete it for good from there.</li>
+<li>If someone else saves the same note while you're editing, you'll see a warning. Saving keeps their version in History.</li>
+</ul>`],
+  ['links', 'Links', () => `
+<p>Links connect notes and NPCs to each other. Each one shows up in the reader as a tappable word, under <b>Connections</b> at the bottom of a note or an NPC sheet, and as a line on the Graph.</p>
+<ul>
+<li>Type <code>[[</code>, or tap <b>Link</b>, and a list of matching notes and NPCs appears. Keep typing to narrow it down, then tap one or press Return.</li>
+<li><b>Notes</b> are linked by title: <code>${esc('[[Wallrun System]]')}</code>.</li>
+<li><b>NPCs</b> are linked by name. An NPC without a name is linked by its job: <code>${esc('[[Innkeeper]]')}</code>. When several NPCs share a name or a job, the place goes in brackets: <code>${esc('[[Guard captain (Port Town)]]')}</code>. The list picks the right form for you.</li>
+<li>To show different words, add them after a bar: <code>${esc('[[Wallrun System|wallrunning]]')}</code> shows “wallrunning”.</li>
+<li>You can link something that doesn't exist yet. It shows dashed, and tapping it lets you write that note.</li>
+<li>Renaming a note or an NPC updates the links to it everywhere.</li>
+</ul>
+<h3>Linking NPCs to each other</h3>
+<p>On an NPC sheet, type <code>[[</code> in any text box, for example <b>Relationships</b> on the More tab: <code>${esc('Owes money to [[Innkeeper]]. Fears [[Gronek]].')}</code>. You can also tap <b>Link an NPC or note</b> under Connections on the Basics tab. The sheet's Connections list who this NPC links to, and which NPCs and notes mention them.</p>`],
+  ['npcs', 'NPCs', () => `
+<ul>
+<li><b>Overview</b> counts the NPCs by tier and place, and shows how much is written.</li>
+<li><b>Write first</b> lists the key characters, one place at a time.</li>
+<li><b>Roster</b> lists everyone, with filters for place, job, tier and writing status. <b>Jobs</b> groups them by job.</li>
+<li>Tap an NPC to open their character sheet. Its tabs (Basics, Description, Story, Behavior, Schedule, More) hold everything about them. Tap <b>Save</b> to keep changes.</li>
+<li><b>Close</b> hides the sheet. Unsaved changes stay with that NPC's tab, marked with a dot, until you save or discard them.</li>
+<li><b>Tiers:</b> Key characters get a full backstory, Supporting ones a short bio, and Background NPCs a single line.</li>
+</ul>`],
+  ['graph', 'Graph', () => `
+<p>The Graph shows every note as a dot and every NPC as a square. Each line is a link between them. Dots are coloured by note group, and a dashed dot is something linked but not written yet.</p>
+<ul>
+<li>Tap a dot to see what it connects to. Tap it again, or tap <b>Open</b>, to open it.</li>
+<li>Drag the background to move around. Pinch, or use the mouse wheel, to zoom. Drag a dot to move it.</li>
+<li>The buttons at the top show or hide notes and NPCs. NPCs that don't link to anything are hidden at first; turn on <b>Unlinked NPCs</b> to see all of them.</li>
+<li><b>Show in graph</b>, at the bottom of a note or an NPC sheet, jumps to that dot.</li>
+</ul>`],
+  ['island', 'Island & more', () => `
+<ul>
+<li><b>Island:</b> pinch or scroll to zoom and drag to pan. <b>Measure</b> lets you drag out a distance, and the Places list jumps to each town.</li>
+<li><b>Zurivel:</b> the Zurivel Dictionary note has a translator. Any note can show one: put a line with three backticks and <code>zurivel</code>, then a line with three backticks.</li>
+<li><b>Settings</b> (the gear) changes the theme and text size, and is where the owner invites people to the team.</li>
+</ul>`],
+];
+let helpTopic = store.get('vael.helpTopic') || 'start';
+function drawHelp(){
+  if (!HELP.some(h => h[0] === helpTopic)) helpTopic = 'start';
+  $('helpTabs').innerHTML = HELP.map(([id, name]) => `<button type="button" role="tab" data-p="${id}" aria-selected="${id === helpTopic}">${name}</button>`).join('');
+  $('helpBody').innerHTML = HELP.find(h => h[0] === helpTopic)[2]();
+  $('helpPane').scrollTop = 0;
+}
+function openHelp(topic){ if (topic) helpTopic = topic; drawHelp(); $('helpScrim').hidden = false; $('helpSheet').hidden = false; $('helpClose').focus(); }
+function closeHelp(){ $('helpScrim').hidden = true; $('helpSheet').hidden = true; }
+$('helpBtn').addEventListener('click', () => openHelp());
+$('helpClose').addEventListener('click', closeHelp);
+$('helpScrim').addEventListener('click', closeHelp);
+$('helpTabs').addEventListener('click', e => { const b = e.target.closest('button[data-p]'); if (b){ helpTopic = b.dataset.p; store.set('vael.helpTopic', helpTopic); drawHelp(); } });
+$('helpBody').addEventListener('click', e => { if (e.target.closest('a.wl')) e.preventDefault(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('helpSheet').hidden){ closeHelp(); e.stopImmediatePropagation(); } }, true);
+
 // ---------- graph ----------
-// Every note is a dot, every [[link]] a line. Links to notes that don't exist yet show as dashed dots.
-const G = { nodes: [], edges: [], byKey: new Map(), pos: new Map(), cam: { x: 0, y: 0, s: 1 }, w: 1, h: 1, sel: null, drag: null, alpha: 0, raf: 0, settled: false, colors: null };
+// The Graph tab: every note is a dot and every NPC a square; every [[link]] is a line. Links to things that don't
+// exist yet show as dashed dots. Node keys: n:<note title>, p:<npc id>, m:<missing name>.
+const G = { nodes: [], edges: [], byKey: new Map(), pos: new Map(), cam: { x: 0, y: 0, s: 1 }, w: 1, h: 1, sel: null, drag: null, alpha: 0, raf: 0, settled: false, colors: null,
+  show: Object.assign({ notes: true, npcs: true, lone: false }, (() => { try { return JSON.parse(store.get('vael.graphShow') || '{}'); } catch { return {}; } })()) };
 window.__vaelGraph = G;
 const gcv = $('graphCv'), gctx = gcv.getContext('2d');
+const graphOpen = () => !$('v-graph').hidden;
 const hash01 = s => { let h = 2166136261; for (let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return ((h >>> 0) % 10000) / 10000; };
 function graphColors(){
   const cs = getComputedStyle(document.documentElement), v = k => cs.getPropertyValue(k).trim();
-  G.colors = { ink: v('--ink'), muted: v('--muted'), bg: v('--bg'), key: v('--key'), g: GROUPS.map((_, i) => v('--g' + i)) };
+  G.colors = { ink: v('--ink'), muted: v('--muted'), bg: v('--bg'), key: v('--key'), npc: v('--npc'), g: GROUPS.map((_, i) => v('--g' + i)) };
 }
+const linkKey = t => { const o = resolveLink(t); return o && o.note ? 'n:' + o.note.title.toLowerCase() : o && o.npc ? 'p:' + o.npc.id : 'm:' + String(t).trim().toLowerCase(); };
 function buildGraph(){
-  const live = liveNotes(), nodes = [], byKey = new Map(), edges = [], seen = new Set();
-  for (const n of live){ const nd = { key: n.title.toLowerCase(), id: n.id, title: n.title, gi: GROUPS.indexOf(groupOf(n)), missing: false, deg: 0 }; nodes.push(nd); byKey.set(nd.key, nd); }
-  for (const n of live){
-    const a = byKey.get(n.title.toLowerCase());
-    for (const t of linksIn(n.body)){
-      const k = t.toLowerCase(); if (k === a.key) continue;
-      let b = byKey.get(k); if (!b){ b = { key: k, id: null, title: t, gi: -1, missing: true, deg: 0 }; nodes.push(b); byKey.set(k, b); }
-      const ek = a.key < k ? a.key + '\u0000' + k : k + '\u0000' + a.key; if (seen.has(ek)) continue;
-      seen.add(ek); edges.push([a, b]); a.deg++; b.deg++;
-    }
+  const nodes = [], byKey = new Map(), edges = [], seen = new Set(), sh = G.show;
+  const add = nd => { nd.deg = 0; nodes.push(nd); byKey.set(nd.key, nd); return nd; };
+  if (sh.notes) for (const n of liveNotes()) add({ key: 'n:' + n.title.toLowerCase(), kind: 'note', id: n.id, title: n.title, gi: GROUPS.indexOf(groupOf(n)) });
+  if (sh.npcs) for (const r of NPCX.list) add({ key: 'p:' + r.id, kind: 'npc', id: r.id, title: npcShown(r), tier: r.tier, gi: -1 });
+  const link = (a, t) => {
+    const k = linkKey(t); if (k === a.key) return;
+    let b = byKey.get(k);
+    if (!b){ if (k[0] !== 'm') return; b = add({ key: k, kind: 'missing', id: null, title: String(t).trim(), gi: -1 }); }
+    const ek = a.key < k ? a.key + '\u0000' + k : k + '\u0000' + a.key; if (seen.has(ek)) return;
+    seen.add(ek); edges.push([a, b]); a.deg++; b.deg++;
+  };
+  for (const nd of nodes.slice()){
+    if (nd.kind === 'note'){ const n = byId.get(nd.id); for (const t of linksIn(n.body)) link(nd, t); }
+    else if (nd.kind === 'npc'){ const r = NPCX.byId.get(nd.id); if (r) for (const t of linksIn(npcText(r))) link(nd, t); }
   }
-  const hubs = new Set(nodes.slice().sort((x, y) => y.deg - x.deg).slice(0, 6).filter(n => n.deg > 2));
-  for (const nd of nodes){
+  // NPCs that link nowhere stay out of the way unless asked for.
+  const keep = sh.lone ? nodes : nodes.filter(n => n.kind !== 'npc' || n.deg > 0);
+  const hubs = new Set(keep.slice().sort((x, y) => y.deg - x.deg).slice(0, 6).filter(n => n.deg > 2));
+  for (const nd of keep){
     const p = G.pos.get(nd.key);
     if (p){ nd.x = p.x; nd.y = p.y; }
-    else { const ang = ((nd.gi < 0 ? 7 : nd.gi) / 8) * Math.PI * 2 + hash01(nd.key) * 0.7, rad = 120 + hash01(nd.key + 'r') * 140; nd.x = Math.cos(ang) * rad; nd.y = Math.sin(ang) * rad; }
-    nd.vx = 0; nd.vy = 0; nd.r = 4.5 + Math.sqrt(nd.deg) * 1.25; nd.sr = nd.r; nd.hub = hubs.has(nd);
+    else { const slot = nd.kind === 'npc' ? 6.5 : nd.gi < 0 ? 7 : nd.gi; const ang = (slot / 8) * Math.PI * 2 + hash01(nd.key) * 0.7, rad = 120 + hash01(nd.key + 'r') * 140; nd.x = Math.cos(ang) * rad; nd.y = Math.sin(ang) * rad; }
+    nd.vx = 0; nd.vy = 0; nd.r = (nd.kind === 'npc' ? (nd.tier === 'k' ? 5.5 : 4.2) : 4.5) + Math.sqrt(nd.deg) * 1.25; nd.sr = nd.r; nd.hub = hubs.has(nd);
   }
-  G.nodes = nodes; G.edges = edges; G.byKey = byKey;
-  if (G.sel && !byKey.has(G.sel)) G.sel = null;
+  G.nodes = keep; G.edges = edges; G.byKey = new Map(keep.map(n => [n.key, n]));
+  if (G.sel && !G.byKey.has(G.sel)) G.sel = null;
 }
 function gTick(a){
   const N = G.nodes;
@@ -1864,7 +2326,7 @@ function gFit(){
   if (!G.nodes.length) return;
   let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
   for (const n of G.nodes){ x0 = Math.min(x0, n.x); y0 = Math.min(y0, n.y); x1 = Math.max(x1, n.x); y1 = Math.max(y1, n.y); }
-  const top = 44, bottom = 84;   // room for the legend and the selection bar
+  const top = 92, bottom = 84;   // room for the legend, the buttons and the selection bar
   G.cam.s = Math.max(.25, Math.min(2, Math.min((G.w - 48) / Math.max(1, x1 - x0), (G.h - top - bottom - 30) / Math.max(1, y1 - y0))));
   G.cam.x = (x0 + x1) / 2; G.cam.y = (y0 + y1) / 2 - (top - bottom) / 2 / G.cam.s;
 }
@@ -1876,6 +2338,7 @@ function drawGraph(){
   const sel = G.sel ? G.byKey.get(G.sel) : null, near = new Set();
   if (sel){ near.add(sel); for (const [a, b] of G.edges){ if (a === sel) near.add(b); else if (b === sel) near.add(a); } }
   for (const [a, b] of G.edges){
+    if (!G.byKey.has(a.key) || !G.byKey.has(b.key)) continue;
     const hot = sel && (a === sel || b === sel);
     gctx.globalAlpha = sel ? (hot ? .95 : .08) : .26; gctx.strokeStyle = hot ? c.key : c.muted; gctx.lineWidth = hot ? 1.7 : 1;
     gctx.beginPath(); gctx.moveTo(X(a.x), Y(a.y)); gctx.lineTo(X(b.x), Y(b.y)); gctx.stroke();
@@ -1883,26 +2346,28 @@ function drawGraph(){
   for (const n of G.nodes){
     const r = Math.max(3.5, n.r * Math.min(1.5, Math.max(.75, s))); n.sr = r;
     gctx.globalAlpha = sel && !near.has(n) ? .22 : 1;
-    gctx.beginPath(); gctx.arc(X(n.x), Y(n.y), r, 0, Math.PI * 2);
-    if (n.missing){ gctx.fillStyle = c.bg; gctx.fill(); gctx.setLineDash([3, 3]); gctx.strokeStyle = c.muted; gctx.lineWidth = 1.4; gctx.stroke(); gctx.setLineDash([]); }
-    else { gctx.fillStyle = c.g[n.gi] || c.muted; gctx.fill(); if (n === sel){ gctx.strokeStyle = c.ink; gctx.lineWidth = 2.5; gctx.stroke(); } }
+    gctx.beginPath();
+    if (n.kind === 'npc'){ const q = r * .9; gctx.roundRect ? gctx.roundRect(X(n.x) - q, Y(n.y) - q, q * 2, q * 2, q * .35) : gctx.rect(X(n.x) - q, Y(n.y) - q, q * 2, q * 2); }
+    else gctx.arc(X(n.x), Y(n.y), r, 0, Math.PI * 2);
+    if (n.kind === 'missing'){ gctx.fillStyle = c.bg; gctx.fill(); gctx.setLineDash([3, 3]); gctx.strokeStyle = c.muted; gctx.lineWidth = 1.4; gctx.stroke(); gctx.setLineDash([]); }
+    else { gctx.fillStyle = n.kind === 'npc' ? c.npc : c.g[n.gi] || c.muted; gctx.fill(); if (n === sel){ gctx.strokeStyle = c.ink; gctx.lineWidth = 2.5; gctx.stroke(); } }
   }
   gctx.font = '600 12.5px "Alegreya Sans", "Segoe UI", system-ui, sans-serif'; gctx.textAlign = 'center'; gctx.textBaseline = 'top'; gctx.lineJoin = 'round';
-  // Labels: the selected note first, then the most connected. A label is skipped if it would sit on one already drawn.
+  // Labels: the selected dot first, then the most connected. A label is skipped if it would sit on one already drawn.
   const boxes = [], order = (sel ? [...near] : G.nodes.slice()).sort((a, b) => (b === sel) - (a === sel) || b.deg - a.deg);
   for (const n of order){
     const x = X(n.x), y = Y(n.y) + n.sr + 3, w = gctx.measureText(n.title).width, box = [x - w / 2 - 3, y - 2, x + w / 2 + 3, y + 15];
     if (n !== sel && boxes.some(b => box[0] < b[2] && b[0] < box[2] && box[1] < b[3] && b[1] < box[3])) continue;
     boxes.push(box);
     gctx.globalAlpha = 1; gctx.strokeStyle = c.bg; gctx.lineWidth = 3.5; gctx.strokeText(n.title, x, y);
-    gctx.fillStyle = n.missing ? c.muted : c.ink; gctx.fillText(n.title, x, y);
+    gctx.fillStyle = n.kind === 'missing' ? c.muted : c.ink; gctx.fillText(n.title, x, y);
   }
   gctx.globalAlpha = 1;
 }
 function gRun(){
   cancelAnimationFrame(G.raf);
   const step = () => {
-    if ($('graphView').hidden) return;
+    if (!graphOpen()) return;
     if (G.alpha > .02){ gTick(G.alpha); G.alpha *= .97; gSavePos(); }
     drawGraph();
     if (G.alpha > .02 || G.drag) G.raf = requestAnimationFrame(step);
@@ -1917,25 +2382,29 @@ function gResize(){
 }
 function gSelect(nd){
   G.sel = nd ? nd.key : null;
-  const n = nd && !nd.missing ? byId.get(nd.id) : null;
-  $('gselTitle').textContent = nd ? nd.title : 'Tap a note to see what it connects to.';
+  const n = nd && nd.kind === 'note' ? byId.get(nd.id) : null, r = nd && nd.kind === 'npc' ? NPCX.byId.get(nd.id) : null;
+  const conn = nd ? `${nd.deg} connection${nd.deg === 1 ? '' : 's'}` : '';
+  $('gselTitle').textContent = nd ? nd.title : 'Tap a dot to see what it connects to.';
   $('gselMeta').textContent = !nd ? 'Tap it again to open it. Pinch to zoom, drag to move around.'
-    : nd.missing ? `Not written yet · linked from ${nd.deg} note${nd.deg === 1 ? '' : 's'}`
-    : `${n ? groupOf(n).name : ''} · ${nd.deg} connection${nd.deg === 1 ? '' : 's'}`;
-  $('gselOpen').textContent = nd && nd.missing ? 'Write it' : 'Open';
-  $('gselOpen').hidden = !nd || (nd.missing && (notesReadOnly || !notesCol));
+    : nd.kind === 'missing' ? `Not written yet · linked from ${nd.deg} place${nd.deg === 1 ? '' : 's'}`
+    : r ? ['NPC', npcName(r) && npcRole(r), npcPlace(r), conn].filter(Boolean).join(' · ')
+    : `${n ? groupOf(n).name : ''} · ${conn}`;
+  $('gselOpen').textContent = nd && nd.kind === 'missing' ? 'Write it' : nd && nd.kind === 'npc' ? 'Open sheet' : 'Open';
+  $('gselOpen').hidden = !nd || (nd.kind === 'missing' && (notesReadOnly || !notesCol));
   $('graphSel').classList.toggle('idle', !nd);
   drawGraph();
 }
 function gOpenSel(){
   const nd = G.sel ? G.byKey.get(G.sel) : null; if (!nd) return;
-  stack = [];
-  if (nd.missing){ if (!notesReadOnly && notesCol){ current = null; startEdit(null, { title: nd.title, folder: 'Story & Lore' }); } }
+  if (nd.kind === 'npc'){ openNpcTab(nd.id); return; }
+  showView('notes');
+  parkNoteEdit(); stack = [];
+  if (nd.kind === 'missing'){ if (!notesReadOnly && notesCol){ current = null; startEdit(null, { title: nd.title, folder: 'Story & Lore' }); } }
   else openNote(nd.id, true);
 }
 function openGraph(){
   if (!gResize()) return;
-  graphColors(); buildGraph();
+  graphColors(); buildGraph(); drawLegend();
   if (!G.settled && G.nodes.length){
     for (let i = 0, a = 1; i < 320; i++, a = Math.max(.05, a * .988)) gTick(a);   // settle before the first frame
     gSavePos(); gFit(); G.settled = true; G.alpha = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : .08;
@@ -1943,22 +2412,30 @@ function openGraph(){
   gSelect(G.sel ? G.byKey.get(G.sel) : null);
   gRun();
 }
-function applyGroupView(){
-  const g = group === 'graph';
-  $('notesPane').hidden = g; $('graphView').hidden = !g;
-  $('newNoteBtn').hidden = !notesLoaded || notesReadOnly || !notesCol || g;
-  if (g) openGraph();
+// Notes or NPCs changed: rebuild the graph if it is on screen (otherwise it rebuilds when opened).
+let graphTimer = 0;
+function graphChanged(){ clearTimeout(graphTimer); graphTimer = setTimeout(() => { if (graphOpen()) openGraph(); }, 120); }
+function showInGraph(key){
+  showView('graph');
+  const nd = G.byKey.get(key);
+  if (!nd && key[0] === 'p' && !G.show.lone){ G.show.lone = true; store.set('vael.graphShow', JSON.stringify(G.show)); openGraph(); }
+  const n2 = G.byKey.get(key);
+  if (n2){ G.cam.s = Math.max(G.cam.s, 1); G.cam.x = n2.x; G.cam.y = n2.y + 20 / G.cam.s; gSelect(n2); }
 }
-function showInGraph(id){
-  const n = byId.get(id); if (!n) return;
-  group = 'graph'; store.set('vael.noteGroup', group);
-  closeReader(); noteTabs(); applyGroupView();
-  const nd = G.byKey.get(n.title.toLowerCase());
-  if (nd){ G.cam.s = Math.max(G.cam.s, 1); G.cam.x = nd.x; G.cam.y = nd.y + 20 / G.cam.s; gSelect(nd); }
+function drawLegend(){
+  const tg = (k, label) => `<button type="button" class="gtog" data-gs="${k}" aria-pressed="${!!G.show[k]}">${label}</button>`;
+  $('graphLegend').innerHTML = `<div class="gtogs">${tg('notes', 'Notes')}${tg('npcs', 'NPCs')}${G.show.npcs ? tg('lone', 'Unlinked NPCs') : ''}</div><div class="gkey">`
+    + (G.show.notes ? GROUPS.map((g, i) => `<span><i style="background:var(--g${i})"></i>${g.name}</span>`).join('') : '')
+    + (G.show.npcs ? '<span><i class="sq"></i>NPC</span>' : '') + '<span><i class="un"></i>Not written yet</span></div>';
 }
-$('graphLegend').innerHTML = GROUPS.map((g, i) => `<span><i style="background:var(--g${i})"></i>${g.name}</span>`).join('') + '<span><i class="un"></i>Not written yet</span>';
+$('graphLegend').addEventListener('click', e => {
+  const b = e.target.closest('[data-gs]'); if (!b) return;
+  G.show[b.dataset.gs] = !G.show[b.dataset.gs]; store.set('vael.graphShow', JSON.stringify(G.show));
+  openGraph(); if (!G.sel){ gFit(); drawGraph(); }
+});
 $('graphFit').addEventListener('click', () => { gFit(); drawGraph(); });
 $('gselOpen').addEventListener('click', gOpenSel);
+window.addEventListener('vael:view', e => { if (e.detail === 'graph') openGraph(); else cancelAnimationFrame(G.raf); });
 
 // Touch and mouse: drag the background to move, drag a dot to rearrange, pinch or scroll to zoom.
 const gp = new Map(); let gdrag = null, gpinch = null;
@@ -1999,10 +2476,11 @@ const gEnd = e => {
 };
 gcv.addEventListener('pointerup', gEnd); gcv.addEventListener('pointercancel', gEnd);
 gcv.addEventListener('wheel', e => { e.preventDefault(); const p = glocal(e); gZoom(p[0], p[1], Math.exp(-e.deltaY * (e.deltaMode === 1 ? .05 : .0016))); }, { passive: false });
-new ResizeObserver(() => { if (!$('graphView').hidden && gResize()) drawGraph(); }).observe($('graphView'));
-const gRetheme = () => { graphColors(); if (!$('graphView').hidden) drawGraph(); };
+new ResizeObserver(() => { if (graphOpen() && gResize()) drawGraph(); }).observe($('graphView'));
+const gRetheme = () => { graphColors(); if (graphOpen()) drawGraph(); };
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', gRetheme);
 new MutationObserver(gRetheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+if (graphOpen()) requestAnimationFrame(openGraph);
 
 // ---------- data ----------
 refreshLists();
@@ -2144,7 +2622,8 @@ $('schedAdd').addEventListener('click', () => {
 $('schedRows').addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if (!b) return; const list = readSched(); list.splice(Number(b.dataset.rm), 1); drawSched(list); resetArms(); setMsg(''); });
 $('schedRows').addEventListener('input', schedChanged);
 
-let editing = null, baseline = '', saving = false, closeArmed = false, delArmed = false;
+// editing.key is the NPC's id, or "new-…" for one that hasn't been saved yet.
+let editing = null, baseline = '', saving = false, delArmed = false;
 function snapshotForm(){
   const d = {}; for (const k of TEXT) d[k] = $('f_' + k).value.trim();
   d.scheduleEntries = readSched(); d.tier = $('f_tier').value; d.status = $('f_status').value; d.src = $('f_src').value;
@@ -2159,64 +2638,203 @@ function tierHints(){
   $('traits').hidden = t === 'b'; $('tempWrap').hidden = t !== 'b';
 }
 $('f_tier').addEventListener('input', tierHints);
-function openSheet(r, isNew){
-  editing = { id: isNew ? null : r.id, created: r.createdAt || null };
+function fillForm(r){
   for (const k of TEXT) $('f_' + k).value = r[k] ?? '';
   drawSched(Array.isArray(r.scheduleEntries) ? r.scheduleEntries : []);
   $('f_tier').value = T[r.tier] ? r.tier : 's'; $('f_status').value = STATUS[r.status] ? r.status : 'todo';
   $('f_src').value = ['canon', 'new', 'mine'].includes(r.src) ? r.src : 'mine'; $('f_n').value = Number(r.n) || 1; $('f_hidden').checked = !!r.hidden;
   for (const [k] of TRAITS){ const v = r.traits && Number.isFinite(r.traits[k]) ? r.traits[k] : 50; $('t_' + k).value = v; $('o_' + k).textContent = v; }
-  tierHints(); baseline = JSON.stringify(snapshotForm());
+  tierHints();
+}
+
+// ---------- open-NPC tabs ----------
+// Each NPC you open gets a tab at the top of the sheet. Switching tabs or closing the sheet keeps unsaved changes
+// with that NPC's tab (marked with a dot, kept on this device) until you save or discard them.
+const NPC_TAB_MAX = 12;
+const readJ = (k, d) => { try { const v = JSON.parse(store.get(k) || ''); return v && typeof v === 'object' ? v : d; } catch { return d; } };
+let nTabs = readJ('vael.npcTabs', []).filter(x => typeof x === 'string'), nDrafts = new Map(Object.entries(readJ('vael.npcDrafts', {}))), ntCloseArmed = '';
+const saveNpcTabs = () => { store.set('vael.npcTabs', JSON.stringify(nTabs)); store.set('vael.npcDrafts', JSON.stringify(Object.fromEntries(nDrafts))); };
+function addNpcTab(key){
+  if (nTabs.includes(key)) return;
+  const at = editing ? nTabs.indexOf(editing.key) : -1;
+  nTabs.splice(at >= 0 ? at + 1 : nTabs.length, 0, key);
+  while (nTabs.length > NPC_TAB_MAX){ const old = nTabs.find(x => x !== key && !nDrafts.has(x)); if (!old) break; nTabs.splice(nTabs.indexOf(old), 1); }
+  saveNpcTabs();
+}
+function npcTabLabel(key){
+  const d = nDrafts.get(key), r = npcs.find(x => x.id === key), src = d ? d.data : r;
+  return src ? (src.name || src.role || 'Untitled NPC') : key.startsWith('new-') ? 'New NPC' : '';
+}
+function drawNpcStrips(){
+  if (loaded) nTabs = nTabs.filter(k => k.startsWith('new-') ? nDrafts.has(k) || (editing && editing.key === k) : npcs.some(r => r.id === k));
+  const act = editing ? editing.key : null;
+  const html = nTabs.map(k => {
+    const t = npcTabLabel(k), dot = nDrafts.has(k) || (k === act && dirty()), armed = ntCloseArmed === k;
+    return `<span class="ot${k === act ? ' on' : ''}"><button type="button" class="otl" data-nt="${esc(k)}" aria-current="${k === act}" title="${esc(t)}">${dot ? '<i class="dot" title="Unsaved changes"></i>' : ''}<span>${esc(t)}</span></button><button type="button" class="otx${armed ? ' armed' : ''}" data-ntx="${esc(k)}" aria-label="Close ${esc(t)}">${armed ? 'Discard?' : '×'}</button></span>`;
+  }).join('');
+  $('sheetStrip').innerHTML = nTabs.length > 1 || (nTabs.length && !nTabs.includes(act)) ? html : '';
+  $('npcStrip').innerHTML = html; $('npcStrip').hidden = !nTabs.length || !!editing;
+  const on = $('sheetStrip').querySelector('.ot.on'); if (on) on.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+// Keep the open sheet's unsaved changes with its tab, then clear the form.
+function parkSheet(){
+  if (!editing) return;
+  const k = editing.key;
+  if (dirty()) nDrafts.set(k, { data: snapshotForm(), id: editing.id, created: editing.created });
+  else { nDrafts.delete(k); if (k.startsWith('new-')) nTabs = nTabs.filter(x => x !== k); }
+  saveNpcTabs();
+}
+function openNpcTab(key){
+  if (document.getElementById('v-npcs').hidden) showView('npcs');
+  ntCloseArmed = '';
+  if (editing && editing.key === key){ drawNpcStrips(); return; }
+  const d = nDrafts.get(key), r = npcs.find(x => x.id === key);
+  if (!r && !d) return;
+  parkSheet();
+  openSheet(r || d.data, !r, key);
+}
+function closeNpcTab(key){
+  const act = editing ? editing.key : null, unsaved = nDrafts.has(key) || (key === act && dirty());
+  if (unsaved && ntCloseArmed !== key){ ntCloseArmed = key; drawNpcStrips(); setMsg('This tab has unsaved changes. Tap Discard? to close it and drop them.', 'err'); return; }
+  ntCloseArmed = ''; nDrafts.delete(key);
+  const i = nTabs.indexOf(key); if (i >= 0) nTabs.splice(i, 1); saveNpcTabs();
+  if (key === act){ editing = null; const next = nTabs[Math.min(i, nTabs.length - 1)]; if (next) openNpcTab(next); else closeSheet(); }
+  else { setMsg(''); drawNpcStrips(); }
+}
+for (const strip of [$('sheetStrip'), $('npcStrip')]){
+  strip.addEventListener('click', e => { const x = e.target.closest('[data-ntx]'); if (x){ closeNpcTab(x.dataset.ntx); return; } const b = e.target.closest('[data-nt]'); if (b) openNpcTab(b.dataset.nt); });
+  strip.addEventListener('auxclick', e => { const b = e.target.closest('[data-nt]'); if (e.button === 1 && b){ e.preventDefault(); closeNpcTab(b.dataset.nt); } });
+}
+
+// key: which tab this is (the id, or "new-…"). A parked draft for that tab is put back on top of the saved record.
+function openSheet(r, isNew, key){
+  key = key || (isNew ? 'new-' + Date.now().toString(36) : r.id);
+  const d = nDrafts.get(key);
+  editing = { id: isNew ? (d && d.id) || null : r.id, created: (d && d.created) || r.createdAt || null, key };
+  fillForm(r); baseline = JSON.stringify(snapshotForm());
+  if (isNew && !d) baseline = JSON.stringify(snapshotForm());
+  setMsg(''); resetArms();
+  if (d){ fillForm(d.data); nDrafts.delete(key); saveNpcTabs(); if (isNew) baseline = JSON.stringify({}); setMsg('Your unsaved changes are back. Tap Save to keep them.', ''); }
+  addNpcTab(key);
   $('dTitle').textContent = isNew ? 'New NPC' : (r.name || r.role || 'Character sheet');
-  setMsg(''); resetArms(); $('delBtn').hidden = isNew; $('dupBtn').hidden = isNew;
+  $('delBtn').hidden = !editing.id; $('dupBtn').hidden = !editing.id; $('npcGraphBtn').hidden = !editing.id;
   for (const b of [$('saveBtn'), $('delBtn'), $('dupBtn')]) b.disabled = !canWrite;
   if (!canWrite) setMsg('You can read this roster but not change it. Ask the owner to make you a writer.', '');
   sheetSub('basics');
   $('scrim').hidden = false; $('sheet').hidden = false;
+  drawNpcConn(); drawNpcStrips();
 }
-function closeSheet(){ editing = null; $('scrim').hidden = true; $('sheet').hidden = true; }
+function closeSheet(){ editing = null; $('scrim').hidden = true; $('sheet').hidden = true; npcSugg.el = null; $('npcSugg').hidden = true; drawNpcStrips(); }
 function setMsg(text, kind){ const m = $('dMsg'); m.textContent = text; m.className = 'smsg' + (kind ? ' ' + kind : ''); }
-function resetArms(){ closeArmed = false; delArmed = false; $('closeLbl').textContent = 'Close'; $('delBtn').textContent = 'Delete'; $('delBtn').classList.remove('armed'); }
-function tryClose(){
-  if (dirty() && !closeArmed){ closeArmed = true; $('closeLbl').textContent = 'Discard?'; setMsg('You have unsaved changes. Tap Discard? to close without saving, or Save.', 'err'); return; }
-  closeSheet();
-}
+function resetArms(){ delArmed = false; $('closeLbl').textContent = 'Close'; $('delBtn').textContent = 'Delete'; $('delBtn').classList.remove('armed'); }
+// Close hides the sheet; unsaved changes stay with the NPC's tab.
+function tryClose(){ parkSheet(); closeSheet(); }
 $('closeBtn').addEventListener('click', tryClose);
 $('scrim').addEventListener('click', tryClose);
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && editing) tryClose(); });
-$('form').addEventListener('input', () => { if (closeArmed){ resetArms(); setMsg(''); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && editing && $('npcSugg').hidden) tryClose(); });
+let npcStripTimer = 0;
+$('form').addEventListener('input', () => { if (ntCloseArmed){ ntCloseArmed = ''; setMsg(''); } clearTimeout(npcStripTimer); npcStripTimer = setTimeout(() => { drawNpcStrips(); drawNpcConn(); }, 300); });
 $('form').addEventListener('submit', e => { e.preventDefault(); save(); });
+document.addEventListener('keydown', e => { if (editing && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's'){ e.preventDefault(); save(); } });
 async function save(){
   if (saving || !editing || !col) return;
   const d = snapshotForm();
   if (!d.role && !d.name){ setMsg('Give the NPC a role or a name before saving.', 'err'); sheetSub('basics'); $('f_role').focus(); return; }
   d.scheduleEntries = sortSched(d.scheduleEntries);
   saving = true; $('saveBtn').disabled = true; $('saveBtn').textContent = 'Saving…';
-  const now = new Date().toISOString();
+  const now = new Date().toISOString(), oldKey = editing.key, before = editing.id ? npcs.find(x => x.id === editing.id) : null, oldKeys = editing.id ? npcKeysOf(editing.id) : [];
   try {
     const ref = editing.id ? col.doc(editing.id) : col.doc();
     await ref.set({ ...d, createdAt: editing.created || now, updatedAt: now });
-    editing.id = ref.id; editing.created = editing.created || now;
+    editing.id = ref.id; editing.created = editing.created || now; editing.key = ref.id;
+    if (oldKey !== ref.id){ const i = nTabs.indexOf(oldKey); if (i >= 0) nTabs[i] = ref.id; }
+    nDrafts.delete(oldKey); saveNpcTabs();
     drawSched(d.scheduleEntries); baseline = JSON.stringify(snapshotForm());
-    $('dTitle').textContent = d.name || d.role; $('delBtn').hidden = false; $('dupBtn').hidden = false;
-    resetArms(); setMsg('Saved.', 'ok');
+    $('dTitle').textContent = d.name || d.role; $('delBtn').hidden = false; $('dupBtn').hidden = false; $('npcGraphBtn').hidden = false;
+    resetArms();
+    const moved = before ? await relinkRenamedNpc(before, { ...before, ...d, id: ref.id }, oldKeys) : 0;
+    setMsg(moved ? `Saved. Updated the links in ${moved} note${moved === 1 ? '' : 's'} and sheet${moved === 1 ? '' : 's'}.` : 'Saved.', 'ok');
+    drawNpcStrips(); drawNpcConn();
   } catch (e) {
     if (e && e.code === 'invalid_argument'){ canWrite = false; applyWriteState(); setMsg('This roster is read-only for you, so the change was not saved.', 'err'); }
     else if (e && e.code === 'quota_exceeded') setMsg('The roster is full. Delete some NPCs and try again.', 'err');
     else setMsg('Could not save right now. Check your connection and tap Save again.', 'err');
   } finally { saving = false; $('saveBtn').textContent = 'Save'; $('saveBtn').disabled = !canWrite; }
 }
+// When an NPC's name, job or place changes, links that used the old name are pointed at the new one.
+async function relinkRenamedNpc(oldR, newR, oldKeys){
+  if (npcName(oldR) === npcName(newR) && npcRole(oldR) === npcRole(newR) && npcPlace(oldR) === npcPlace(newR)) return 0;
+  const next = npcIndex(npcs.map(x => x.id === newR.id ? newR : x)), newLabel = next.label.get(newR.id);
+  if (!newLabel) return 0;
+  let count = 0;
+  for (const k of oldKeys){
+    const hit = next.byKey.get(k); if (hit && hit.id === newR.id) continue;   // the old name still works
+    const re = linkRe(k);
+    if (notesCol) for (const o of NOTES.slice()){ const nb = o.body.replace(re, (_, rest) => '[[' + newLabel + rest + ']]'); if (nb !== o.body){ try { await notesCol.doc(o.id).update({ body: nb }); applyLocal({ id: o.id, body: nb }); count++; } catch {} } }
+    count += await relinkNpcs(re, newLabel);
+  }
+  return count;
+}
 $('saveBtn').addEventListener('click', save);
-$('dupBtn').addEventListener('click', () => { const d = snapshotForm(); openSheet({ ...d, name: '', status: 'todo', src: 'mine', role: d.role ? d.role + ' (copy)' : '' }, true); setMsg('This is an unsaved copy. Edit it and tap Save.', ''); });
+$('dupBtn').addEventListener('click', () => { const d = snapshotForm(); parkSheet(); openSheet({ ...d, name: '', status: 'todo', src: 'mine', role: d.role ? d.role + ' (copy)' : '' }, true); baseline = ''; setMsg('This is an unsaved copy. Edit it and tap Save.', ''); drawNpcStrips(); });
 $('delBtn').addEventListener('click', async () => {
   if (!editing || !editing.id || !col) return;
-  if (!delArmed){ delArmed = true; $('delBtn').textContent = 'Delete for good?'; $('delBtn').classList.add('armed'); setMsg('Tap Delete for good? to remove this NPC. This cannot be undone.', 'err'); return; }
+  if (!delArmed){
+    const back = npcKeysOf(editing.id), n = back.length ? NOTES.filter(o => !o.trashed && o.out.some(t => back.includes(t))).length + NPCX.list.filter(r => r.id !== editing.id && (NPCX.out.get(r.id) || []).some(t => back.includes(t))).length : 0;
+    delArmed = true; $('delBtn').textContent = 'Delete for good?'; $('delBtn').classList.add('armed');
+    setMsg((n ? `${n} note${n === 1 ? ' or sheet links' : 's or sheets link'} to this NPC, and those links will show as missing. ` : '') + 'Tap Delete for good? to remove this NPC. This cannot be undone.', 'err'); return;
+  }
   $('delBtn').disabled = true;
-  try { await col.doc(editing.id).delete(); closeSheet(); } catch { setMsg('Could not delete right now. Try again.', 'err'); $('delBtn').disabled = false; resetArms(); }
+  try { const key = editing.key; await col.doc(editing.id).delete(); editing = null; closeNpcTab(key); if (!editing) closeSheet(); }
+  catch { setMsg('Could not delete right now. Try again.', 'err'); $('delBtn').disabled = false; resetArms(); }
 });
-$('addBtn').addEventListener('click', () => openSheet({ tier: 's', n: 1, status: 'todo', src: 'mine', place: $('fPlace').value || keyPlace, job: $('fJob').value }, true));
-$('v-npcs').addEventListener('click', e => { const b = e.target.closest('[data-id]'); if (!b) return; const r = npcs.find(x => x.id === b.dataset.id); if (r) openSheet(r, false); });
+$('addBtn').addEventListener('click', () => { parkSheet(); openSheet({ tier: 's', n: 1, status: 'todo', src: 'mine', place: $('fPlace').value || keyPlace, job: $('fJob').value }, true); });
+$('v-npcs').addEventListener('click', e => { if (e.target.closest('.otabs')) return; const b = e.target.closest('[data-id]'); if (!b) return; const r = npcs.find(x => x.id === b.dataset.id); if (r) openNpcTab(r.id); });
 function applyWriteState(){ $('addBtn').hidden = !canWrite; if (editing) for (const b of [$('saveBtn'), $('delBtn'), $('dupBtn')]) b.disabled = !canWrite; }
+
+// ---------- links on the sheet ----------
+// Type [[ in any text box on the sheet to link another NPC (by name, or by job) or a note.
+const npcSugg = makeSugg($('npcSugg'), { active: () => !!editing, exclude: () => ({ npcId: editing && editing.id, prefer: 'npc' }), changed: () => $('form').dispatchEvent(new Event('input')) });
+$('form').addEventListener('focusin', e => {
+  const el = e.target.closest('textarea'); if (!el) return;
+  npcSugg.el = el; const wrap = el.closest('label') || el; if (wrap.nextElementSibling !== $('npcSugg')) wrap.after($('npcSugg')); npcSugg.draw();
+});
+for (const ev of ['input', 'click', 'keyup']) $('form').addEventListener(ev, e => { if (e.target === npcSugg.el && (ev !== 'keyup' || /^(Arrow|Home|End)/.test(e.key || ''))) npcSugg.draw(); });
+$('form').addEventListener('focusout', e => { if (e.target === npcSugg.el) setTimeout(() => { if (document.activeElement !== npcSugg.el) $('npcSugg').hidden = true; }, 150); });
+$('form').addEventListener('keydown', e => {
+  if (e.target !== npcSugg.el || $('npcSugg').hidden) return;
+  if (e.key === 'Escape'){ $('npcSugg').hidden = true; e.stopPropagation(); e.preventDefault(); }
+  else if (e.key === 'Enter' && npcSugg.first && npcSugg.ctx){ e.preventDefault(); npcSugg.pick(npcSugg.first); }
+});
+// Connections: who this NPC links to, and which NPCs and notes mention them.
+function drawNpcConn(){
+  if (!editing) return;
+  const d = snapshotForm(), seen = new Set(), outs = [];
+  for (const t of linksIn(npcText(d))){ const k = t.toLowerCase(); if (!seen.has(k)){ seen.add(k); outs.push(t); } }
+  const keys = editing.id ? npcKeysOf(editing.id) : [];
+  const fromNpcs = keys.length ? NPCX.list.filter(r => r.id !== editing.id && (NPCX.out.get(r.id) || []).some(t => keys.includes(t))) : [];
+  const fromNotes = keys.length ? liveNotes().filter(o => o.out.some(t => keys.includes(t))) : [];
+  const chips = outs.map(linkChip).join('');
+  const back = fromNpcs.map(r => linkChip(npcLinkName(r))).join('') + fromNotes.map(o => linkChip(o.title)).join('');
+  const how = editing.id ? `Link to this NPC from a note or another sheet with <code>${esc('[[' + (NPCX.label.get(editing.id) || d.name || d.role) + ']]')}</code>.` : 'Save this NPC first, then other notes and sheets can link to it.';
+  $('npcConn').innerHTML = `<p class="label">Connections</p>`
+    + (chips ? `<p class="sub">Links to</p><div class="chips">${chips}</div>` : '')
+    + (back ? `<p class="sub">Mentioned by</p><div class="chips">${back}</div>` : '')
+    + (!chips && !back ? '<p class="sub">No links yet.</p>' : '')
+    + `<p class="hint">${how}</p>`
+    + (canWrite ? '<div><button type="button" class="btn ghost" id="npcLinkBtn">Link an NPC or note</button></div>' : '');
+}
+$('npcConn').addEventListener('click', e => {
+  if (e.target.closest('#npcLinkBtn')){
+    sheetSub('more'); const el = $('f_relationships'), v = el.value;
+    const add = (v && !v.endsWith('\n') ? '\n' : '') + '[[';
+    el.focus(); replaceIn(el, v.length, v.length, add, v.length + add.length); npcSugg.el = el; el.closest('label').after($('npcSugg')); npcSugg.draw(); return;
+  }
+  const p = e.target.closest('[data-npc]'); if (p){ openNpcTab(p.dataset.npc); return; }
+  const w = e.target.closest('[data-wl]'); if (w){ const t = w.dataset.wl; if (!resolveLink(t)) return; parkSheet(); closeSheet(); showView('notes'); followLink(t); }
+});
+$('npcGraphBtn').addEventListener('click', () => { if (!editing || !editing.id) return; const id = editing.id; parkSheet(); closeSheet(); showInGraph('p:' + id); });
+
 
 renderNpcs();
 (async () => {
@@ -2228,11 +2846,13 @@ renderNpcs();
   col = db.collection('npcs');
   const timer = setTimeout(() => { $('notice').hidden = false; $('notice').textContent = loaded ? 'The roster may be out of date. Still trying to reach it…' : 'The roster can\'t be reached yet. Still trying…'; }, 10000);
   col.onSnapshot(snap => {
-    npcs = snap.docs.map(d => ({ id: d.id, ...d.data() })); loaded = true;
+    npcs = snap.docs.map(d => ({ id: d.id, ...d.data() })); loaded = true; setNpcIndex(npcs);
     if (!snap.metadata.fromCache) clearTimeout(timer);
     if (npcs.length) $('notice').hidden = true;
     else { $('notice').hidden = false; $('notice').textContent = canWrite ? 'The roster is empty. Tap Add NPC to create the first one.' : 'The roster is empty.'; }
-    renderNpcs();
+    renderNpcs(); drawNpcStrips(); graphChanged();
+    if (editing) drawNpcConn();
+    if (current && !$('reader').hidden && !nEdit){ const n = byId.get(current); if (n) showNote(n, true); }
   }, () => { clearTimeout(timer); $('notice').hidden = false; $('notice').textContent = 'The roster could not be loaded. Reload the page to try again.'; });
 })();
 </script>

@@ -1,5 +1,7 @@
     <!-- NOTES -->
     <section class="view" id="v-notes" aria-label="Notes">
+      <nav class="otabs" id="noteStrip" aria-label="Open notes" hidden></nav>
+      <div class="nbody">
       <nav class="subtabs" id="noteTabs" role="tablist" aria-label="Note groups"></nav>
       <div class="pane" id="notesPane">
         <div class="inner">
@@ -9,12 +11,6 @@
           <p class="sub" id="notesStamp"></p>
           <div style="height:64px" aria-hidden="true"></div>
         </div>
-      </div>
-      <div class="graph" id="graphView" hidden>
-        <canvas id="graphCv" aria-label="Graph of the notes and the links between them. The same connections are listed at the bottom of each note."></canvas>
-        <div class="glegend" id="graphLegend"></div>
-        <button type="button" class="gfit" id="graphFit">Fit all</button>
-        <div class="gsel idle" id="graphSel"><div><b id="gselTitle"></b><span id="gselMeta"></span></div><button type="button" class="btn" id="gselOpen" hidden>Open</button></div>
       </div>
       <button class="btn fab" id="newNoteBtn" type="button" hidden><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New note</button>
       <div class="reader" id="reader" hidden>
@@ -29,23 +25,41 @@
           <div class="inner" id="readerBody"></div>
           <form class="inner editor" id="editor" hidden autocomplete="off">
             <label class="fld" for="edTitle">Title<input type="text" id="edTitle" class="ed-title" placeholder="Note title"></label>
-            <label class="fld" for="edFolder">Section<select id="edFolder"></select></label>
+            <div class="grid2">
+              <label class="fld" for="edFolder">Section<select id="edFolder"></select></label>
+              <label class="fld" for="edStatus">Status<select id="edStatus"></select></label>
+            </div>
             <div class="edbar">
               <div class="edtools" role="toolbar" aria-label="Formatting">
-                <button type="button" class="link" data-fmt="link" aria-label="Link to another note">[[ Link</button>
-                <button type="button" data-fmt="h" aria-label="Heading">H</button>
-                <button type="button" data-fmt="b" aria-label="Bold"><b>B</b></button>
-                <button type="button" data-fmt="i" aria-label="Italic"><i>I</i></button>
-                <button type="button" data-fmt="ul" aria-label="Bullet list">List</button>
-                <button type="button" data-fmt="task" aria-label="Checkbox item">Task</button>
+                <select id="edStyle" aria-label="Line style" title="What the current line is: normal text, a section, a heading or a quote">
+                  <option value="p">Text</option>
+                  <option value="h2">Section</option>
+                  <option value="h3">Heading</option>
+                  <option value="q">Quote</option>
+                </select>
+                <button type="button" data-fmt="b" title="Bold (Ctrl+B)" aria-label="Bold"><b>B</b></button>
+                <button type="button" data-fmt="i" title="Italic (Ctrl+I)" aria-label="Italic"><i>I</i></button>
+                <span class="div" aria-hidden="true"></span>
+                <button type="button" data-fmt="ul" title="Bullet list" aria-label="Bullet list"><svg viewBox="0 0 24 24"><circle cx="5" cy="7" r="1.4"/><circle cx="5" cy="12" r="1.4"/><circle cx="5" cy="17" r="1.4"/><path d="M10 7h10M10 12h10M10 17h10"/></svg></button>
+                <button type="button" data-fmt="ol" title="Numbered list" aria-label="Numbered list"><svg viewBox="0 0 24 24"><path d="M10 7h10M10 12h10M10 17h10"/><text x="2.5" y="9" font-size="6.5">1</text><text x="2.5" y="14" font-size="6.5">2</text><text x="2.5" y="19" font-size="6.5">3</text></svg></button>
+                <button type="button" data-fmt="task" title="Checklist: a box you can tick" aria-label="Checklist"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="6" height="6" rx="1"/><path d="M4.5 8l1.3 1.3L8 6.8"/><rect x="3" y="14" width="6" height="6" rx="1"/><path d="M12 8h9M12 17h9"/></svg></button>
+                <button type="button" data-fmt="table" title="Add a table" aria-label="Add a table"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3 10h18M3 14.5h18M10 5v14"/></svg></button>
+                <span class="div" aria-hidden="true"></span>
+                <button type="button" class="link" data-fmt="link" title="Link a note or an NPC (Ctrl+K)" aria-label="Link a note or an NPC"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>Link</button>
+                <span class="div" aria-hidden="true"></span>
+                <button type="button" data-fmt="undo" title="Undo (Ctrl+Z)" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
+                <button type="button" data-fmt="redo" title="Redo (Ctrl+Y)" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button>
                 <span class="sp"></span>
-                <button type="button" id="prevBtn" aria-pressed="false">Preview</button>
+                <div class="wp" role="group" aria-label="Write or preview">
+                  <button type="button" id="writeBtn" aria-pressed="true">Write</button>
+                  <button type="button" id="prevBtn" aria-pressed="false">Preview</button>
+                </div>
+                <button type="button" class="helpq" data-help="writing" title="How formatting works" aria-label="How formatting works">?</button>
               </div>
               <div class="sugg" id="sugg" hidden></div>
             </div>
-            <label class="fld" for="edBody" id="edBodyWrap"><span class="vh">Note text</span><textarea id="edBody" class="ed-body" spellcheck="true" placeholder="Write here. Type [[ to link another note."></textarea></label>
+            <label class="fld" for="edBody" id="edBodyWrap"><span class="vh">Note text</span><textarea id="edBody" class="ed-body" spellcheck="true" placeholder="Write here. Pick Section in the first box for a heading that folds, and tap Link to connect another note or an NPC."></textarea></label>
             <div class="prose" id="edPreview" hidden></div>
-            <p class="hint">Type <code>[[</code> or tap <b>[[ Link</b> to connect another note. You can link a note that doesn't exist yet: the link shows dashed, and tapping it later creates that note.</p>
             <div class="sacts">
               <button class="btn ghost" id="histBtn" type="button">History</button>
               <button class="btn danger" id="trashBtn" type="button">Move to trash</button>
@@ -53,6 +67,7 @@
             <div class="list" id="histList" hidden></div>
           </form>
         </div>
+      </div>
       </div>
     </section>
 
